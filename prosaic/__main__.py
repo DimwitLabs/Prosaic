@@ -27,7 +27,6 @@ class ProsaicApp(App):
     TITLE = "prosaic"
     CSS = PROSAIC_LIGHT_CSS
     BINDINGS = [
-        Binding("ctrl+c", "quit", "quit", show=False),
         Binding("ctrl+q", "smart_quit", "quit", show=False, priority=True),
     ]
 
