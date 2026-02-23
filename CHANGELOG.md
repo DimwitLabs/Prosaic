@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Anti-features section on landing page (no cloud sync, AI writing, subscriptions, telemetry).
 - GitHub Action for automatic PyPI publishing on push to main.
+- Cross-platform testing workflow (Ubuntu, macOS, Windows × Python 3.11-3.13).
+- Publish only runs after all tests pass.
 
 ## [0.1.3] - 2026-02-23
 

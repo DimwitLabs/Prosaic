@@ -1,5 +1,9 @@
 # Prosaic
 
+[![Publish to PyPI](https://github.com/DeepanshKhurana/Prosaic/actions/workflows/publish.yml/badge.svg)](https://github.com/DeepanshKhurana/Prosaic/actions/workflows/publish.yml)
+[![PyPI version](https://img.shields.io/pypi/v/prosaic-app)](https://pypi.org/project/prosaic-app/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A writer-first terminal writing app built with Python and Textual, built with the assistance of LLM/Copilot tools.
 
 **Website:** [prosaic.dimwit.me](https://prosaic.dimwit.me)
