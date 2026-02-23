@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3] - 2026-02-23
+
+### Added
+
+- Landing page at `prosaic.dimwit.me` with Prosaic light theme styling.
+- GitHub issue and PR templates.
+- Published to PyPI as `prosaic-app` (`pipx install prosaic-app`).
+
+### Fixed
+
+- `ctrl+c` now correctly copies text instead of quitting (use `ctrl+q` to quit).
+
 ## [0.1.2] - 2026-02-22
 
 ### Added
