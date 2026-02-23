@@ -2,6 +2,8 @@
 
 A writer-first terminal writing app built with Python and Textual, built with the assistance of LLM/Copilot tools.
 
+**Website:** [prosaic.dimwit.me](https://prosaic.dimwit.me)
+
 ## Motivation
 
 I write on multiple devices (an iPad, a laptop, even more), and I wanted a quick way to start every day, get some frontmatter ready for my daily pieces on [journal.coffee](https://journal.coffee), jot down notes and even work on books. I have tried several software, some stellar, some half-assed, some bloated, some minimal, but I felt like I needed something of my own.
@@ -28,7 +30,7 @@ Looking somewhere to publish your writing that is philosophically compatible wit
 
 ```bash
 # Install (requires Python 3.11+)
-pipx install prosaic
+pipx install prosaic-app
 
 # Run (first launch runs setup wizard)
 prosaic
@@ -42,6 +44,7 @@ prosaic --setup
 - **Markdown-first**: Live outline, word counting
 - **Focus mode**: Hide everything except your writing
 - **Reader mode**: Distraction-free reading
+- **Start writing**: Quick writing session with all panes open
 - **Continue writing**: Resume your last edited document
 - **Daily metrics**: Track words and characters written each day
 - **Git-ready**: Archive is Git-initialized for versioning
@@ -50,6 +53,7 @@ prosaic --setup
 
 | Category | Key | Action |
 |----------|-----|--------|
+| Dashboard | `s` | Start writing (quick session) |
 | Dashboard | `c` | Continue writing (if last file exists) |
 | Dashboard | `p` | Write a piece |
 | Dashboard | `b` | Work on a book |
