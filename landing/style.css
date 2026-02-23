@@ -80,6 +80,7 @@ body {
 
 .terminal-body {
     padding: 2rem;
+    min-height: 420px;
 }
 
 h1 {
@@ -238,5 +239,73 @@ h1 {
     .nav-links {
         flex-direction: column;
         gap: 0.75rem;
+    }
+}
+
+/* Documentation page styles */
+.docs-section {
+    margin-bottom: 2rem;
+}
+
+.docs-usage {
+    display: block;
+    background: var(--terminal-header);
+    padding: 1rem 1.5rem;
+    border-radius: 4px;
+    border-left: 3px solid var(--primary-color);
+    font-size: 1rem;
+    color: var(--text-color);
+}
+
+.docs-heading {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--comment-color);
+    margin-bottom: 1rem;
+}
+
+.docs-table {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.docs-row {
+    display: flex;
+    gap: 2rem;
+    align-items: baseline;
+}
+
+.docs-option {
+    font-size: 0.9rem;
+    color: var(--primary-color);
+    min-width: 120px;
+    flex-shrink: 0;
+}
+
+.docs-desc {
+    font-size: 0.9rem;
+    color: var(--text-color);
+}
+
+.docs-examples {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.docs-examples code {
+    font-size: 0.9rem;
+    color: var(--text-color);
+}
+
+@media (max-width: 480px) {
+    .docs-row {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .docs-option {
+        min-width: auto;
     }
 }
