@@ -25,9 +25,9 @@ Looking somewhere to publish your writing that is philosophically compatible wit
 
 | | |
 |---|---|
-| ![](media/light.png) | ![](media/dark.png) |
-| ![](media/light2.png) | ![](media/dark2.png) |
-| ![](media/light3.png) | ![](media/dark3.png) |
+| ![](media/_light1.png) | ![](media/_dark1.png) |
+| ![](media/_light2.png) | ![](media/_dark2.png) |
+| ![](media/_light3.png) | ![](media/_dark3.png) |
 
 ## Installation
 
