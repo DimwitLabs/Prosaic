@@ -17,16 +17,19 @@ from prosaic.core.metrics import MetricsTracker
 from prosaic.widgets import FileTree, OutlinePanel, SpellCheckTextArea, StatusBar
 
 
-class EditorScreen(Screen):
+class EditorScreen(Screen, inherit_bindings=False):
     """Main writing screen with editor, file tree, and outline."""
 
     BINDINGS = [
+        Binding("tab", "app.focus_next", "focus next", show=False),
+        Binding("shift+tab", "app.focus_previous", "focus previous", show=False),
+        Binding("ctrl+c,super+c", "screen.copy_text", "copy", show=False),
         Binding("ctrl+e", "toggle_tree", "tree", priority=True),
         Binding("ctrl+s", "save", "save", priority=True),
         Binding("ctrl+o", "toggle_outline", "outline"),
         Binding("f5", "toggle_focus", "focus mode"),
         Binding("f6", "toggle_reader", "reader mode"),
-        Binding("?", "show_help", "help", show=False),
+        Binding("f1", "show_help", "help"),
     ]
 
     show_tree: reactive[bool] = reactive(True)

@@ -4,15 +4,28 @@ from collections.abc import Iterable
 from pathlib import Path
 
 from rich.text import Text
+from textual.binding import Binding
 from textual.containers import Vertical
 from textual.message import Message
 from textual.widgets import DirectoryTree, Static
 
 
-class FilteredDirectoryTree(DirectoryTree):
+class FilteredDirectoryTree(DirectoryTree, inherit_bindings=False):
     """Directory tree with emoji-free labels and hidden-file filtering."""
 
     HIDDEN_FILES = {".git", ".DS_Store", "metrics.json", "__pycache__"}
+
+    BINDINGS = [
+        Binding("enter", "select_cursor", "open"),
+        Binding("space", "toggle_node", "expand"),
+        Binding("shift+left", "cursor_parent", "cursor to parent", show=False),
+        Binding("shift+right", "cursor_parent_next_sibling", "cursor to next ancestor", show=False),
+        Binding("shift+up", "cursor_previous_sibling", "cursor to previous sibling", show=False),
+        Binding("shift+down", "cursor_next_sibling", "cursor to next sibling", show=False),
+        Binding("shift+space", "toggle_expand_all", "expand or collapse all", show=False),
+        Binding("up", "cursor_up", "cursor up", show=False),
+        Binding("down", "cursor_down", "cursor down", show=False),
+    ]
 
     def filter_paths(self, paths: Iterable[Path]) -> Iterable[Path]:
         return [
