@@ -6,7 +6,6 @@ import click
 from textual.app import App
 from textual.binding import Binding
 
-from prosaic.app import HelpScreen, NewBookModal, NewPieceModal
 from prosaic.config import (
     ensure_workspace,
     get_notes_path,
@@ -17,7 +16,7 @@ from prosaic.config import (
 from prosaic.core.metrics import MetricsTracker
 from prosaic.screens import DashboardScreen, EditorScreen
 from prosaic.themes import PROSAIC_DARK_CSS, PROSAIC_LIGHT_CSS
-from prosaic.widgets import SpellCheckTextArea
+from prosaic.widgets import LowercaseKeyPanel, SpellCheckTextArea
 from prosaic.wizard import needs_setup, run_setup, setup_workspace
 
 
@@ -44,8 +43,23 @@ class ProsaicApp(App):
 
     TITLE = "prosaic"
     CSS = PROSAIC_LIGHT_CSS
+    ENABLE_COMMAND_PALETTE = False
     BINDINGS = [
         Binding("ctrl+q", "smart_quit", "quit", show=False, priority=True),
+        Binding("ctrl+p", "toggle_keys", "keys", priority=True),
+        Binding("escape", "close_keys", "close", show=False),
+        Binding("up", "scroll_up", "scroll up", show=False),
+        Binding("down", "scroll_down", "scroll down", show=False),
+        Binding("left", "scroll_left", "scroll left", show=False),
+        Binding("right", "scroll_right", "scroll right", show=False),
+        Binding("home", "scroll_home", "scroll home", show=False),
+        Binding("end", "scroll_end", "scroll end", show=False),
+        Binding("pageup", "page_up", "page up", show=False),
+        Binding("pagedown", "page_down", "page down", show=False),
+        Binding("ctrl+pageup", "page_left", "page left", show=False),
+        Binding("ctrl+pagedown", "page_right", "page right", show=False),
+        Binding("tab", "focus_next", "focus next", show=False),
+        Binding("shift+tab", "focus_previous", "focus previous", show=False),
     ]
 
     def __init__(
@@ -81,40 +95,6 @@ class ProsaicApp(App):
             )
         )
 
-    def _open_notes(self) -> None:
-        self.push_screen(
-            EditorScreen(
-                self.metrics,
-                initial_file=self.notes_path,
-                light_mode=self.light_mode,
-                add_note=True,
-            )
-        )
-
-    def _open_notes_readonly(self) -> None:
-        self.push_screen(
-            EditorScreen(
-                self.metrics,
-                initial_file=self.notes_path,
-                light_mode=self.light_mode,
-                reader_mode_initial=True,
-            )
-        )
-
-    def _handle_new_piece(self, result: Path | None) -> None:
-        if result:
-            self._open_editor(result)
-
-    def _handle_new_book(self, result: Path | None) -> None:
-        if result:
-            self._open_editor(result)
-
-    def action_new_piece(self) -> None:
-        self.push_screen(NewPieceModal(), callback=self._handle_new_piece)
-
-    def action_new_book(self) -> None:
-        self.push_screen(NewBookModal(), callback=self._handle_new_book)
-
     def toggle_theme(self) -> None:
         self.light_mode = not self.light_mode
         ProsaicApp.CSS = PROSAIC_LIGHT_CSS if self.light_mode else PROSAIC_DARK_CSS
@@ -136,12 +116,23 @@ class ProsaicApp(App):
         screen = self.screen
         if isinstance(screen, EditorScreen):
             screen.action_go_home()
-        elif isinstance(screen, DashboardScreen):
-            self.exit()
-        elif len(self.screen_stack) > 1:
-            self.pop_screen()
         else:
             self.exit()
+
+    def action_toggle_keys(self) -> None:
+        if self.screen.query("KeyPanel"):
+            self.action_hide_help_panel()
+        else:
+            self.action_show_help_panel()
+
+    def action_close_keys(self) -> None:
+        if self.screen.query("KeyPanel"):
+            self.action_hide_help_panel()
+
+    def action_show_help_panel(self) -> None:
+        """Show help panel with lowercase bindings."""
+        if not self.screen.query("KeyPanel"):
+            self.screen.mount(LowercaseKeyPanel())
 
 
 @click.command()

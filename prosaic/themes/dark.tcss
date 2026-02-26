@@ -525,6 +525,30 @@ Button.-primary:hover {
     margin-top: 1;
 }
 
+KeyPanel {
+    background: $surface;
+    border-left: solid $border;
+}
+
+KeyPanel > BindingsTable > .bindings-table--key {
+    color: $primary;
+    text-style: bold;
+}
+
+KeyPanel > BindingsTable > .bindings-table--description {
+    color: $text;
+}
+
+KeyPanel > BindingsTable > .bindings-table--header {
+    color: $primary;
+    text-style: underline;
+}
+
+HelpPanel {
+    background: $surface;
+    border-left: solid $border;
+}
+
 .focus-mode #file-tree {
     display: none;
 }
