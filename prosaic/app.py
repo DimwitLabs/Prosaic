@@ -56,7 +56,10 @@ press escape or q to close
 class CreateFileModal(ModalScreen[Path | None]):
     """Base modal for creating files."""
 
-    BINDINGS = [Binding("escape", "cancel", "cancel")]
+    BINDINGS = [
+        Binding("escape", "cancel", "cancel"),
+        Binding("ctrl+q", "cancel", "cancel", show=False, priority=True),
+    ]
 
     # Subclasses override these
     TITLE: str = ""
@@ -184,7 +187,10 @@ class _FileItem(ListItem):
 class FileFindModal(ModalScreen[Path | None]):
     """Modal for finding files."""
 
-    BINDINGS = [Binding("escape", "cancel", "cancel")]
+    BINDINGS = [
+        Binding("escape", "cancel", "cancel"),
+        Binding("ctrl+q", "cancel", "cancel", show=False, priority=True),
+    ]
 
     def compose(self) -> ComposeResult:
         with Vertical(id="find-dialog"):
@@ -243,7 +249,8 @@ class HelpScreen(ModalScreen):
 
     BINDINGS = [
         Binding("escape", "close", "close"),
-        Binding("q", "close", "close"),
+        Binding("q", "close", "close", show=False),
+        Binding("ctrl+q", "close", "close", show=False, priority=True),
     ]
 
     def compose(self) -> ComposeResult:

@@ -5,6 +5,7 @@ from pathlib import Path
 import click
 from textual.app import App
 from textual.binding import Binding
+from textual.screen import ModalScreen
 
 from prosaic.config import (
     ensure_workspace,
@@ -46,8 +47,8 @@ class ProsaicApp(App):
     ENABLE_COMMAND_PALETTE = False
     BINDINGS = [
         Binding("ctrl+q", "smart_quit", "quit", show=False, priority=True),
-        Binding("ctrl+p", "toggle_keys", "keys", priority=True),
-        Binding("escape", "close_keys", "close", show=False),
+        Binding("ctrl+p", "toggle_keys", "key palette", priority=True),
+        Binding("escape", "close_keys", "close", show=False, priority=True),
         Binding("up", "scroll_up", "scroll up", show=False),
         Binding("down", "scroll_down", "scroll down", show=False),
         Binding("left", "scroll_left", "scroll left", show=False),
@@ -113,26 +114,51 @@ class ProsaicApp(App):
         self.exit()
 
     def action_smart_quit(self) -> None:
+        """Close layers in sequence: KeyPanel > Modal > Screen."""
         screen = self.screen
+        if screen.query("KeyPanel"):
+            self.action_hide_help_panel()
+            return
+        if isinstance(screen, ModalScreen):
+            if hasattr(screen, "action_cancel"):
+                screen.action_cancel()
+            elif hasattr(screen, "action_close"):
+                screen.action_close()
+            return
         if isinstance(screen, EditorScreen):
             screen.action_go_home()
         else:
             self.exit()
 
     def action_toggle_keys(self) -> None:
+        """Toggle the key palette panel."""
         if self.screen.query("KeyPanel"):
             self.action_hide_help_panel()
         else:
             self.action_show_help_panel()
 
     def action_close_keys(self) -> None:
-        if self.screen.query("KeyPanel"):
+        """Handle escape key: close KeyPanel, modal, or delegate to screen."""
+        screen = self.screen
+        if screen.query("KeyPanel"):
             self.action_hide_help_panel()
+        elif isinstance(screen, ModalScreen):
+            if hasattr(screen, "action_cancel"):
+                screen.action_cancel()
+            elif hasattr(screen, "action_close"):
+                screen.action_close()
+        elif hasattr(screen, "action_quit"):
+            screen.action_quit()
 
     def action_show_help_panel(self) -> None:
         """Show help panel with lowercase bindings."""
         if not self.screen.query("KeyPanel"):
             self.screen.mount(LowercaseKeyPanel())
+
+    def action_hide_help_panel(self) -> None:
+        """Hide the help panel."""
+        for panel in self.screen.query("KeyPanel"):
+            panel.remove()
 
 
 @click.command()

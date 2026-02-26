@@ -38,7 +38,6 @@ class DashboardScreen(Screen, inherit_bindings=False):
         Binding("f", "find_piece", "find files"),
         Binding("q", "quit", "quit"),
         Binding("f1", "show_help", "help"),
-        Binding("escape", "quit", "quit", show=False),
     ]
 
     def __init__(self, metrics: MetricsTracker, **kwargs) -> None:
