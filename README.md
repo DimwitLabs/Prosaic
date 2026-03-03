@@ -35,6 +35,9 @@ Looking somewhere to publish your writing that is philosophically compatible wit
 # Install (requires Python 3.11+)
 pipx install prosaic-app
 
+# Upgrade to latest version
+pipx upgrade prosaic-app
+
 # Run (first launch runs setup wizard)
 prosaic
 
@@ -117,8 +120,10 @@ Manage profiles from the dashboard menu (`m` key) or edit in `~/.config/prosaic/
 | Dashboard | `q` | Quit |
 | Editor | `Ctrl+e` | Toggle file tree |
 | Editor | `Ctrl+o` | Toggle outline |
+| Editor | `Ctrl+p` | Key palette |
 | Editor | `Ctrl+s` | Save |
 | Editor | `Ctrl+q` | Go home |
+| Editor | `F1` | Help |
 | Editor | `F5` | Focus mode |
 | Editor | `F6` | Reader mode |
 | Writing | `Ctrl+z` | Undo |
@@ -127,6 +132,7 @@ Manage profiles from the dashboard menu (`m` key) or edit in `~/.config/prosaic/
 | Writing | `Ctrl+c` | Copy |
 | Writing | `Ctrl+v` | Paste |
 | Writing | `Ctrl+a` | Select all |
+| Writing | `Ctrl+k` | Toggle markdown comment |
 
 ## Themes
 
@@ -168,12 +174,18 @@ Example `settings.json`:
 
 ```json
 {
+  "app_version": "1.2.1",
   "setup_complete": true,
-  "archive_dir": "/Users/you/Prosaic",
-  "init_git": true,
-  "git_remote": "git@github.com:you/writing.git",
-  "git_inherited": true,
-  "last_file": "/Users/you/Prosaic/pieces/2026-02-21-example.md"
+  "active_profile": "default",
+  "profiles": {
+    "default": {
+      "archive_dir": "/Users/you/Prosaic",
+      "init_git": true,
+      "git_remote": "git@github.com:you/writing.git",
+      "theme": "light",
+      "last_file": "/Users/you/Prosaic/pieces/2026-03-03-example.md"
+    }
+  }
 }
 ```
 
