@@ -14,6 +14,10 @@ from prosaic.config import get_books_dir, get_pieces_dir, get_workspace_dir
 HELP_TEXT = """
 shortcuts
 
+navigation
+  tab       next
+  shift+tab previous
+
 dashboard
   s         start writing
   p         write a piece
@@ -61,7 +65,6 @@ class CreateFileModal(ModalScreen[Path | None]):
         Binding("ctrl+q", "cancel", "cancel", show=False, priority=True),
     ]
 
-    # Subclasses override these
     TITLE: str = ""
     PROMPT: str = "enter a title (or leave blank for timestamp):"
     PLACEHOLDER: str = "my-file"

@@ -4,8 +4,8 @@ $primary: #dcae91;
 $primary-muted: #b8927a;
 $secondary: #ffe066;
 $background: #1a1a1a;
-$surface: #242424;
-$panel: #2e2e2e;
+$surface: #1a1a1a;
+$panel: #1a1a1a;
 $text: #e8e8e8;
 $text-muted: #888888;
 $text-dim: #666666;
@@ -144,7 +144,7 @@ Input:focus {
 
 #dashboard {
     width: 60;
-    height: 26;
+    height: 28;
     padding: 1 2;
     background: $surface;
     border: round $border;
@@ -430,7 +430,7 @@ TextArea > .text-area--cursor-gutter {
 
 ModalScreen {
     align: center middle;
-    background: rgba(0, 0, 0, 0.6);
+    background: $background;
 }
 
 #dialog {
@@ -490,6 +490,14 @@ Button.-primary:hover {
     background: $primary-muted;
 }
 
+#theme-toggle {
+    min-width: 8;
+    height: 1;
+    border: none;
+    background: $panel;
+    margin: 0;
+}
+
 #help-dialog {
     width: 65;
     height: auto;
@@ -528,6 +536,13 @@ Button.-primary:hover {
 KeyPanel {
     background: $surface;
     border-left: solid $border;
+    scrollbar-color: $text-dim;
+    scrollbar-color-hover: $text-muted;
+    scrollbar-color-active: $primary;
+    scrollbar-background: transparent;
+    scrollbar-background-hover: $panel;
+    scrollbar-background-active: $panel;
+    scrollbar-size: 1 1;
 }
 
 KeyPanel > BindingsTable > .bindings-table--key {
@@ -579,4 +594,71 @@ HelpPanel {
 
 .reader-mode #editor {
     padding: 2 20;
+}
+
+/* Profiles Screen */
+
+#profiles-container {
+    width: 100%;
+    height: 100%;
+    align: center middle;
+}
+
+#profiles-panel {
+    width: 60;
+    height: auto;
+    padding: 1 2;
+    background: $background;
+    border: round $border;
+}
+
+#profiles-title {
+    text-align: center;
+    text-style: bold;
+    color: $primary;
+    padding-bottom: 1;
+    border-bottom: solid $border;
+    margin-bottom: 1;
+}
+
+.profile-current-name {
+    color: $text;
+    text-style: bold;
+    padding: 1 0 0 0;
+}
+
+.profile-detail {
+    color: $text-muted;
+}
+
+.profile-spacer {
+    height: 1;
+}
+
+.profile-section-title {
+    color: $text-dim;
+    padding-top: 1;
+}
+
+.profile-other {
+    color: $text-muted;
+}
+
+.profile-hint {
+    color: $text-dim;
+    text-style: italic;
+}
+
+#profiles-footer {
+    padding-top: 1;
+    border-top: solid $border;
+    margin-top: 1;
+    text-align: center;
+    color: $text-muted;
+}
+
+.dialog-hint {
+    padding-top: 1;
+    text-align: center;
+    color: $text-muted;
 }
