@@ -455,6 +455,7 @@ Input {
     border: solid $border;
     padding: 0 1;
     height: 3;
+    color: $text;
 }
 
 Input:focus {

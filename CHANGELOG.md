@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Added upgrade instructions to README.
+- Updated example settings.json to v2 profiles format.
+- Added missing keybindings to README (`ctrl+k`, `ctrl+p`, `f1`).
+
+### Fixed
+
+- Input text too light in light mode modals.
 
 ## [1.2.0] - 2026-03-03
 
