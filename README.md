@@ -52,6 +52,8 @@ prosaic [OPTIONS] [FILE]
 |--------|-------------|
 | `--light` | Use light theme (default) |
 | `--dark` | Use dark theme |
+| `--profile <name>` | Use a specific profile |
+| `--profiles` | List all profiles |
 | `--setup` | Run setup wizard again |
 | `--reference` | Show reference |
 | `--license` | Show MIT license |
@@ -72,7 +74,32 @@ prosaic --dark ~/writing/draft.md
 - **Start writing**: Quick writing session with all panes open
 - **Continue writing**: Resume your last edited document
 - **Daily metrics**: Track words and characters written each day
+- **Profiles**: Separate workspaces for different projects
 - **Git-ready**: Archive is Git-initialized for versioning
+
+## Profiles
+
+Profiles let you maintain separate workspaces for different writing projects (personal, work, fiction, etc.).
+
+```bash
+# List profiles
+prosaic --profiles
+
+# Use a specific profile
+prosaic --profile work
+
+# Create a new profile (runs setup wizard)
+prosaic --profile fiction
+```
+
+Each profile has its own:
+- Archive directory
+- Git remote (optional)
+- Theme preference
+
+Manage profiles from the dashboard menu (`m` key) or edit in `~/.config/prosaic/settings.json`.
+
+**Upgrading from v1.1.1 or older?** Your existing setup is automatically preserved as the "default" profile. On first launch after upgrading, you'll be offered the option to set up additional profiles or rename your default.
 
 ## Keybindings
 
@@ -86,6 +113,7 @@ prosaic --dark ~/writing/draft.md
 | Dashboard | `r` | Read notes |
 | Dashboard | `f` | Find files |
 | Dashboard | `?` | Help |
+| Dashboard | `m` | Manage profile |
 | Dashboard | `q` | Quit |
 | Editor | `Ctrl+e` | Toggle file tree |
 | Editor | `Ctrl+o` | Toggle outline |

@@ -38,3 +38,15 @@ ARCHIVE STRUCTURE
     notes.md        Quick notes with date headers
     metrics.json    Daily writing statistics
     .git/           Version control
+
+
+PROFILES
+--------
+
+Maintain separate workspaces for different projects.
+
+  prosaic --profiles          List all profiles
+  prosaic --profile <name>    Use specific profile
+
+Each profile has its own archive, git remote, and theme.
+Manage from dashboard (m key) or edit settings.json.
