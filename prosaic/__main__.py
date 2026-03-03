@@ -9,10 +9,17 @@ from textual.screen import ModalScreen
 
 from prosaic.config import (
     ensure_workspace,
+    get_active_profile,
+    get_app_version,
     get_notes_path,
+    get_profile_config,
     get_workspace_dir,
+    list_profiles,
+    load_config,
     save_config,
+    set_active_profile,
     set_last_file,
+    was_just_migrated,
 )
 from prosaic.core.metrics import MetricsTracker
 from prosaic.screens import DashboardScreen, EditorScreen
@@ -138,7 +145,7 @@ class ProsaicApp(App):
             self.action_show_help_panel()
 
     def action_close_keys(self) -> None:
-        """Handle escape key: close KeyPanel, modal, or delegate to screen."""
+        """Handle escape key: close KeyPanel, modal, or go back."""
         screen = self.screen
         if screen.query("KeyPanel"):
             self.action_hide_help_panel()
@@ -147,6 +154,10 @@ class ProsaicApp(App):
                 screen.action_cancel()
             elif hasattr(screen, "action_close"):
                 screen.action_close()
+        elif hasattr(screen, "action_go_back"):
+            screen.action_go_back()
+        elif hasattr(screen, "action_go_home"):
+            screen.action_go_home()
         elif hasattr(screen, "action_quit"):
             screen.action_quit()
 
@@ -162,13 +173,38 @@ class ProsaicApp(App):
 
 
 @click.command()
-@click.option("--light/--dark", default=True, help="Use light or dark theme")
+@click.option("--light/--dark", default=None, help="Use light or dark theme")
 @click.option("--setup", is_flag=True, help="Run setup wizard again")
+@click.option("--profile", default=None, help="Use a named profile (see --profiles)")
+@click.option("--profiles", "show_profiles", is_flag=True, help="List available profiles")
 @click.option("--reference", is_flag=True, help="Show reference")
 @click.option("--license", "show_license", is_flag=True, help="Show MIT license")
 @click.argument("file", required=False, type=click.Path())
-def main(light: bool, setup: bool, reference: bool, show_license: bool, file: str | None) -> None:
+def main(
+    light: bool | None,
+    setup: bool,
+    profile: str | None,
+    show_profiles: bool,
+    reference: bool,
+    show_license: bool,
+    file: str | None,
+) -> None:
     """Prosaic - A writer-first terminal writing app."""
+    if show_profiles:
+        config = load_config()
+        profiles = list(config.get("profiles", {}).keys())
+        active = config.get("active_profile", "default")
+        if profiles:
+            click.echo("available profiles:")
+            for name in profiles:
+                marker = "*" if name == active else " "
+                click.echo(f"  {marker} {name}")
+            click.echo()
+            click.echo("usage: prosaic --profile <name>")
+        else:
+            click.echo("no profiles configured. run: prosaic --setup")
+        return
+
     if reference:
         click.echo(_get_reference_text())
         return
@@ -177,13 +213,73 @@ def main(light: bool, setup: bool, reference: bool, show_license: bool, file: st
         click.echo(_get_license_text())
         return
 
-    if setup or needs_setup():
-        config = run_setup()
+    config = load_config()
+    is_legacy_upgrade = was_just_migrated()
+    profile_name = profile or config.get("active_profile", "default")
+    set_active_profile(profile_name)
+
+    current_version = get_app_version()
+
+    if is_legacy_upgrade and not setup:
+        click.echo()
+        click.secho(f"new in prosaic {current_version}!", fg="yellow", bold=True)
+        click.echo()
+        click.echo("this version introduces profiles - separate workspaces for")
+        click.echo("different writing projects (personal, work, fiction, etc.)")
+        click.echo()
+        click.echo("your existing setup has been preserved as the 'default' profile.")
+        click.echo()
+
+        click.echo("would you like to learn about profiles and set up more now?")
+        click.echo("you can always do it later with prosaic --setup")
+        click.echo()
+        run_profiles_setup = click.confirm("set up profiles now?", default=False)
+
+        if not run_profiles_setup:
+            click.echo()
+            config["app_version"] = current_version
+            save_config(config)
+        else:
+            setup = True
+
+    existing_profiles = config.get("profiles", {})
+
+    run_wizard = setup or needs_setup(profile_name)
+
+    if run_wizard:
+        if profile and not setup:
+            result = run_setup(
+                profile_name=profile_name,
+                existing_profiles=existing_profiles,
+                single_profile_mode=True,
+            )
+        else:
+            result = run_setup(
+                profile_name=profile_name,
+                existing_profiles=existing_profiles if existing_profiles else None,
+            )
+
+        config["profiles"] = result["profiles"]
+        config["active_profile"] = result["active_profile"]
+        config["app_version"] = get_app_version()
+        config["setup_complete"] = True
+
         save_config(config)
-        setup_workspace(config)
+
+        for name, profile_data in result["profiles"].items():
+            if profile_data.get("archive_dir"):
+                setup_workspace(profile_data)
+
+        set_active_profile(result["active_profile"])
+
+    if light is None:
+        profile_config = get_profile_config(get_active_profile())
+        light_mode = profile_config.get("theme", "light") == "light"
+    else:
+        light_mode = light
 
     app = ProsaicApp(
-        light_mode=light,
+        light_mode=light_mode,
         initial_file=Path(file) if file else None,
     )
     app.run()
