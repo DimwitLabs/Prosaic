@@ -413,6 +413,12 @@ TextArea > .text-area--cursor-gutter {
     width: auto;
 }
 
+#statusbar > #autosave {
+    color: $secondary;
+    width: 1;
+    margin-right: 1;
+}
+
 .spacer {
     width: 1fr;
 }

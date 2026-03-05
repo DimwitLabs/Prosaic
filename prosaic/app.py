@@ -49,10 +49,10 @@ editing
   ctrl+a    select all
   ctrl+k    toggle comment
 
-git status
-  *         modified
-  +         staged
-  ?         untracked
+status
+  ○ / ●     autosave (idle / saved)
+  [+] / [·] editor (unsaved / saved)
+  * / + / ? git (modified / staged / untracked)
 
 press escape or q to close
 """

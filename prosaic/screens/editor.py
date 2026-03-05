@@ -166,6 +166,7 @@ class EditorScreen(Screen, inherit_bindings=False):
 
             statusbar = self.query_one("#statusbar", StatusBar)
             statusbar.flash_autosave()
+            self.call_later(lambda: statusbar.update_git_for_file(file_path))
         except Exception:
             pass
 

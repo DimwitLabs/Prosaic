@@ -28,6 +28,14 @@ If your archive directory contains a git repository:
   - Prompts for remote if none exists
 
 
+STATUS BAR
+----------
+
+  ○ / ●      Autosave (idle / just saved)
+  [+] / [·]  Editor (unsaved / saved)
+  * / + / ?  Git (modified / staged / untracked)
+
+
 ARCHIVE STRUCTURE
 -----------------
 

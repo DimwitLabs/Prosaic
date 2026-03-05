@@ -63,10 +63,10 @@ class StatusBar(Horizontal):
     git_status: reactive[str] = reactive("")
 
     def compose(self):
+        yield Static("○", id="autosave")
         yield Static("untitled", id="filename")
         yield Static("", id="modified")
         yield Static("", id="git")
-        yield Static("", id="autosave")
         yield Static("", classes="spacer")
         yield Static("0 words", id="word-count")
         yield Static("·", classes="sep")
@@ -79,7 +79,7 @@ class StatusBar(Horizontal):
         try:
             self.query_one("#filename", Static).update(self.filename)
             self.query_one("#modified", Static).update(
-                " [+]" if self.modified else ""
+                " [+]" if self.modified else " [·]"
             )
             self.query_one("#git", Static).update(
                 f"  {self.git_status}" if self.git_status else ""
@@ -97,7 +97,7 @@ class StatusBar(Horizontal):
 
     def watch_modified(self, modified: bool) -> None:
         try:
-            self.query_one("#modified", Static).update(" [+]" if modified else "")
+            self.query_one("#modified", Static).update(" [+]" if modified else " [·]")
         except Exception:
             pass
 
@@ -126,7 +126,7 @@ class StatusBar(Horizontal):
         """Briefly show autosave indicator."""
         try:
             indicator = self.query_one("#autosave", Static)
-            indicator.update(" ●")
-            self.set_timer(1.5, lambda: indicator.update(""))
+            indicator.update("●")
+            self.set_timer(1.5, lambda: indicator.update("○"))
         except Exception:
             pass
