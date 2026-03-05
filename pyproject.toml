@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "prosaic-app"
-version = "1.3.1"
+version = "1.3.2"
 description = "A writer-first terminal writing app"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -44,8 +44,8 @@ grammar = [
 prosaic = "prosaic.__main__:main"
 
 [project.urls]
-Homepage = "https://github.com/deepanshkhurana/prosaic"
-Repository = "https://github.com/deepanshkhurana/prosaic"
+Homepage = "https://prosaic.dimwit.me"
+Repository = "https://github.com/dimwitlabs/prosaic"
 
 [tool.setuptools.packages.find]
 where = ["."]
