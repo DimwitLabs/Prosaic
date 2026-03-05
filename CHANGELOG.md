@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-03-05
+
+### Added
+
+- **Autosave**: Files automatically save every 10 seconds with visual indicator in the status bar.
+- **Git friendliness:** remote URL example and explainer text in setup wizard.
+
+### Fixed
+
+- UTF-8 encoding for all file operations with tests (fixes Windows compatibility).
+
+### Changed
+
+- Reader and notes modes now hide tree and show outline, with padding fix for reader mode.
+
 ## [1.2.1] - 2026-03-03
 
 ### Changed
