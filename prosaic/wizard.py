@@ -6,6 +6,7 @@ from pathlib import Path
 import click
 
 from prosaic.config import get_app_version, get_config_path, load_config
+from prosaic.utils import write_text
 
 try:
     from git import Repo
@@ -316,11 +317,11 @@ def setup_workspace(config: dict) -> None:
 
     notes = archive_dir / "notes.md"
     if not notes.exists():
-        notes.write_text("# Notes\n\n")
+        write_text(notes, "# Notes\n\n")
 
     metrics = archive_dir / "metrics.json"
     if not metrics.exists():
-        metrics.write_text('{"daily": {}, "sessions": []}')
+        write_text(metrics, '{"daily": {}, "sessions": []}')
 
     if config.get("init_git", True) and Repo is not None:
         git_dir = archive_dir / ".git"

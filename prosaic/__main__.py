@@ -24,6 +24,7 @@ from prosaic.config import (
 from prosaic.core.metrics import MetricsTracker
 from prosaic.screens import DashboardScreen, EditorScreen
 from prosaic.themes import PROSAIC_DARK_CSS, PROSAIC_LIGHT_CSS
+from prosaic.utils import read_text
 from prosaic.widgets import LowercaseKeyPanel, SpellCheckTextArea
 from prosaic.wizard import needs_setup, run_setup, setup_workspace
 
@@ -36,13 +37,13 @@ def _wrap_output(text: str) -> str:
 
 def _get_reference_text() -> str:
     """Read REFERENCE file from package."""
-    content = (Path(__file__).parent / "REFERENCE").read_text()
+    content = read_text(Path(__file__).parent / "REFERENCE")
     return _wrap_output(content)
 
 
 def _get_license_text() -> str:
     """Read LICENSE file from package."""
-    content = (Path(__file__).parent / "LICENSE").read_text()
+    content = read_text(Path(__file__).parent / "LICENSE")
     return _wrap_output(content)
 
 

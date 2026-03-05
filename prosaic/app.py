@@ -10,6 +10,7 @@ from textual.screen import ModalScreen
 from textual.widgets import Input, Label, ListItem, ListView, Static
 
 from prosaic.config import get_books_dir, get_pieces_dir, get_workspace_dir
+from prosaic.utils import write_text
 
 HELP_TEXT = """
 shortcuts
@@ -105,7 +106,7 @@ class CreateFileModal(ModalScreen[Path | None]):
         target_dir = self._get_target_dir()
         target_dir.mkdir(parents=True, exist_ok=True)
         file_path = target_dir / self._get_filename(title)
-        file_path.write_text(self._get_initial_content(title))
+        write_text(file_path, self._get_initial_content(title))
         self.dismiss(file_path)
 
     def action_cancel(self) -> None:

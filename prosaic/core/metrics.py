@@ -4,6 +4,8 @@ import json
 from datetime import datetime
 from pathlib import Path
 
+from prosaic.utils import read_text, write_text
+
 
 class MetricsTracker:
     """Track writing metrics over time."""
@@ -21,7 +23,7 @@ class MetricsTracker:
         default = {"daily": {}, "sessions": []}
         if self.metrics_file.exists():
             try:
-                data = json.loads(self.metrics_file.read_text())
+                data = json.loads(read_text(self.metrics_file))
                 if isinstance(data, dict):
                     if "daily" not in data:
                         data["daily"] = {}
@@ -35,7 +37,7 @@ class MetricsTracker:
     def _save(self) -> None:
         """Save metrics to file."""
         self.metrics_file.parent.mkdir(parents=True, exist_ok=True)
-        self.metrics_file.write_text(json.dumps(self.metrics, indent=2))
+        write_text(self.metrics_file, json.dumps(self.metrics, indent=2))
 
     def set_baseline(self, word_count: int) -> None:
         """Set baseline word count for current session."""

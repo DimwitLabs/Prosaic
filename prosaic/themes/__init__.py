@@ -2,12 +2,14 @@
 
 from pathlib import Path
 
+from prosaic.utils import read_text
+
 _THEMES_DIR = Path(__file__).parent
 
 
 def _load_css(filename: str) -> str:
     """Load CSS from a .tcss file."""
-    return (_THEMES_DIR / filename).read_text()
+    return read_text(_THEMES_DIR / filename)
 
 
 PROSAIC_LIGHT_CSS = _load_css("light.tcss")

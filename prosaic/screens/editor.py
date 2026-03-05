@@ -14,6 +14,7 @@ from prosaic.app import HelpScreen
 from prosaic.config import get_books_dir, get_workspace_dir
 from prosaic.core import count_characters, count_words
 from prosaic.core.metrics import MetricsTracker
+from prosaic.utils import read_text, write_text
 from prosaic.widgets import FileTree, OutlinePanel, SpellCheckTextArea, StatusBar
 
 
@@ -94,14 +95,14 @@ class EditorScreen(Screen, inherit_bindings=False):
         if not path.exists():
             return
 
-        content = path.read_text()
+        content = read_text(path)
 
         if self._add_note:
             heading = datetime.now().strftime("## %Y-%m-%d %H:%M")
             if content and not content.endswith("\n"):
                 content += "\n"
             content += f"\n{heading}\n\n"
-            path.write_text(content)
+            write_text(path, content)
 
         editor = self.query_one("#editor", TextArea)
         editor.load_text(content)
@@ -130,7 +131,7 @@ class EditorScreen(Screen, inherit_bindings=False):
 
         editor = self.query_one("#editor", TextArea)
         content = editor.text
-        self.current_file.write_text(content)
+        write_text(self.current_file, content)
         self.modified = False
         self.metrics.record_save(count_words(content), self.current_file)
 
@@ -238,7 +239,7 @@ class EditorScreen(Screen, inherit_bindings=False):
         if self.modified and self.current_file:
             try:
                 editor = self.query_one("#editor", TextArea)
-                self.current_file.write_text(editor.text)
+                write_text(self.current_file, editor.text)
             except Exception:
                 pass
 

@@ -6,6 +6,8 @@ import shutil
 from importlib.metadata import version
 from pathlib import Path
 
+from prosaic.utils import read_text, write_text
+
 try:
     from git import Repo
 except ImportError:
@@ -76,7 +78,7 @@ def backup_config() -> Path | None:
         return None
 
     try:
-        config = json.loads(config_path.read_text())
+        config = json.loads(read_text(config_path))
         if "app_version" not in config and config.get("setup_complete"):
             shutil.copy2(config_path, backup_path)
             return backup_path
@@ -128,7 +130,7 @@ def load_config() -> dict:
         return {}
 
     try:
-        config = json.loads(config_path.read_text())
+        config = json.loads(read_text(config_path))
     except (json.JSONDecodeError, OSError):
         return {}
 
@@ -146,7 +148,7 @@ def save_config(config: dict) -> None:
     """Save configuration to settings.json."""
     config_path = get_config_path()
     config_path.parent.mkdir(parents=True, exist_ok=True)
-    config_path.write_text(json.dumps(config, indent=2))
+    write_text(config_path, json.dumps(config, indent=2))
 
 
 def get_profile_config(profile_name: str | None = None) -> dict:
@@ -317,7 +319,7 @@ def ensure_workspace() -> None:
 
     notes = get_notes_path()
     if not notes.exists():
-        notes.write_text("# Notes\n\n")
+        write_text(notes, "# Notes\n\n")
 
     profile = get_profile_config()
     if profile.get("init_git", True) and Repo is not None:
