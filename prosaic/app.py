@@ -87,9 +87,16 @@ class CreateFileModal(ModalScreen[Path | None]):
         slug = title.lower().replace(" ", "-")
         return "".join(c for c in slug if c.isalnum() or c == "-")
 
+    def _strip_md_extension(self, title: str) -> str:
+        """Strip .md extension if user included it."""
+        if title.lower().endswith(".md"):
+            return title[:-3]
+        return title
+
     def _get_filename(self, title: str) -> str:
         """Generate filename from title or timestamp."""
         if title:
+            title = self._strip_md_extension(title)
             return f"{self._slugify(title)}.md"
         return datetime.now().strftime("%Y%m%d%H%M%S") + ".md"
 
@@ -106,6 +113,9 @@ class CreateFileModal(ModalScreen[Path | None]):
         target_dir = self._get_target_dir()
         target_dir.mkdir(parents=True, exist_ok=True)
         file_path = target_dir / self._get_filename(title)
+        if file_path.exists():
+            self.notify(f"File already exists: {file_path.name}", severity="error")
+            return
         write_text(file_path, self._get_initial_content(title))
         self.dismiss(file_path)
 
