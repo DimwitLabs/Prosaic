@@ -380,6 +380,16 @@ TextArea > .text-area--cursor-gutter {
     padding-left: 4;
 }
 
+.outline-item--h4 {
+    color: $text-muted;
+    padding-left: 6;
+}
+
+.outline-item--h5 {
+    color: $text-dim;
+    padding-left: 8;
+}
+
 #outline-list > ListItem.-highlight {
     background: $accent !important;
     color: $text !important;
