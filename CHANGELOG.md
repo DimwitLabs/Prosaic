@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-03-30
+
+### Changed
+
+- **Books**: Now use a folder-based structure with separate chapter files instead of a single document.
+- Legacy books are marked and can be migrated to the new format. Your old file will still be available with a `.bak` extension.
+- Chapters are automatically combined into `manuscript.md` when you compile. `chapters.md` also gets created automatically allowing you to reorder chapters.
+- The manuscript is read-only (in Prosaic) and regenerated on every chapter close or save (including auto-saves).
+
+### Fixed
+
+- File tree auto-expands to show the current file when opening.
+
 ## [1.3.4] - 2026-03-29
 
 ### Fixed
