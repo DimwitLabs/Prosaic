@@ -28,6 +28,7 @@ class EditorScreen(Screen, inherit_bindings=False):
         Binding("ctrl+c,super+c", "screen.copy_text", "copy", show=False),
         Binding("ctrl+e", "toggle_tree", "tree", priority=True),
         Binding("ctrl+s", "save", "save", priority=True),
+        Binding("ctrl+m", "compile_manuscript", "compile", show=False, priority=True),
         Binding("ctrl+o", "toggle_outline", "outline"),
         Binding("f5", "toggle_focus", "focus mode"),
         Binding("f6", "toggle_reader", "reader mode"),
@@ -59,6 +60,9 @@ class EditorScreen(Screen, inherit_bindings=False):
         self._reader_mode_initial = reader_mode_initial
         self._show_all_panes = show_all_panes
         self._is_book = False
+        self._is_chapter = False
+        self._is_manuscript = False
+        self._book_dir: Path | None = None
 
     def compose(self) -> ComposeResult:
         ta_theme = "prosaic_light" if self._light_mode else "prosaic_dark"
@@ -85,13 +89,24 @@ class EditorScreen(Screen, inherit_bindings=False):
             self._load_file(self._initial_file)
             books_dir = get_books_dir()
             try:
-                self._initial_file.relative_to(books_dir)
-                self._is_book = True
+                rel = self._initial_file.relative_to(books_dir)
+                parts = rel.parts
+                if len(parts) >= 3 and parts[1] == "chapters":
+                    self._is_chapter = True
+                    self._book_dir = books_dir / parts[0]
+                elif len(parts) == 2 and parts[1] == "manuscript.md":
+                    self._is_manuscript = True
+                    self._book_dir = books_dir / parts[0]
+                else:
+                    self._is_book = True
             except ValueError:
-                self._is_book = False
+                pass
 
-        if self._reader_mode_initial:
+        if self._reader_mode_initial or self._is_manuscript:
             self.reader_mode = True
+        elif self._is_chapter:
+            self.show_tree = True
+            self.show_outline = False
         elif self._add_note or self._is_book:
             self.show_tree = False
             self.show_outline = True
@@ -135,6 +150,15 @@ class EditorScreen(Screen, inherit_bindings=False):
 
         self._update_stats(content)
         self.metrics.set_baseline(count_words(content))
+        # Delay expand to let tree finish loading
+        self.set_timer(0.1, self._expand_to_current_file)
+
+    def _expand_to_current_file(self) -> None:
+        """Expand the file tree to show the current file."""
+        if not self.current_file:
+            return
+        file_tree = self.query_one("#file-tree", FileTree)
+        file_tree.expand_path(self.current_file.parent)
 
     def _save_file(self, silent: bool = False) -> None:
         if self.current_file is None:
@@ -148,6 +172,13 @@ class EditorScreen(Screen, inherit_bindings=False):
 
         if not silent:
             self.notify(f"Saved {self.current_file.name}")
+
+        if self._is_chapter and self._book_dir:
+            from prosaic.core.book import compile_manuscript
+            try:
+                compile_manuscript(self._book_dir)
+            except Exception:
+                pass
 
     async def _autosave(self) -> None:
         """Autosave current file in background."""
@@ -200,7 +231,7 @@ class EditorScreen(Screen, inherit_bindings=False):
         editor = self.query_one("#editor", TextArea)
         if reader:
             self.add_class("reader-mode")
-            if self._reader_mode_initial:
+            if self._reader_mode_initial or self._is_manuscript:
                 self.show_tree = False
                 self.show_outline = True
             else:
@@ -215,7 +246,10 @@ class EditorScreen(Screen, inherit_bindings=False):
 
     def _restore_panes(self) -> None:
         """Restore pane visibility based on context."""
-        if self._add_note or self._is_book or self._reader_mode_initial:
+        if self._is_chapter:
+            self.show_tree = True
+            self.show_outline = False
+        elif self._add_note or self._is_book or self._reader_mode_initial or self._is_manuscript:
             self.show_tree = False
             self.show_outline = True
         elif self._show_all_panes:
@@ -289,13 +323,31 @@ class EditorScreen(Screen, inherit_bindings=False):
     def action_go_home(self) -> None:
         if self.modified:
             self._save_file(silent=True)
+        elif self._is_chapter and self._book_dir:
+            from prosaic.core.book import compile_manuscript
+            try:
+                compile_manuscript(self._book_dir)
+            except Exception:
+                pass
         self.app.pop_screen()
+
+    def action_compile_manuscript(self) -> None:
+        if self._book_dir:
+            from prosaic.core.book import compile_manuscript
+            try:
+                compile_manuscript(self._book_dir)
+                self.notify("Manuscript compiled")
+            except Exception as exc:
+                self.notify(f"Compile failed: {exc}", severity="error")
 
     def on_unmount(self) -> None:
         if self.modified and self.current_file:
             try:
                 editor = self.query_one("#editor", TextArea)
                 write_text(self.current_file, editor.text)
+                if self._is_chapter and self._book_dir:
+                    from prosaic.core.book import compile_manuscript
+                    compile_manuscript(self._book_dir)
             except Exception:
                 pass
 

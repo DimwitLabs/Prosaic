@@ -61,6 +61,47 @@ class FileTree(Vertical):
         yield Static("files", id="tree-title", classes="panel-title")
         yield FilteredDirectoryTree(self.root, id="directory-tree")
 
+    def expand_path(self, path: Path) -> None:
+        """Expand directories leading to the given path."""
+        tree = self.query_one("#directory-tree", FilteredDirectoryTree)
+        
+        try:
+            rel_parts = path.relative_to(self.root).parts
+        except ValueError:
+            return
+        
+        dirs_to_expand: list[Path] = []
+        current = self.root
+        for part in rel_parts:
+            current = current / part
+            if current.is_dir():
+                dirs_to_expand.append(current)
+        
+        self._pending_expands = dirs_to_expand
+        self._do_expand_step(tree.root)
+    
+    def _do_expand_step(self, node) -> None:
+        """Expand one level, then schedule next."""
+        if not hasattr(self, "_pending_expands") or not self._pending_expands:
+            return
+        
+        target = self._pending_expands[0]
+        
+        if node.is_collapsed:
+            node.expand()
+            self.set_timer(0.05, lambda: self._do_expand_step(node))
+            return
+        
+        for child in node.children:
+            if hasattr(child, "data") and child.data and hasattr(child.data, "path"):
+                if child.data.path == target:
+                    self._pending_expands.pop(0)
+                    if self._pending_expands:
+                        self._do_expand_step(child)
+                    else:
+                        child.expand()
+                    return
+
     def on_directory_tree_file_selected(
         self,
         event: DirectoryTree.FileSelected,

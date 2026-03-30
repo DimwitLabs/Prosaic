@@ -8,7 +8,14 @@ from textual.containers import Container, Horizontal, Vertical
 from textual.screen import Screen
 from textual.widgets import Static
 
-from prosaic.app import FileFindModal, HelpScreen, NewBookModal, NewPieceModal, StartWritingModal
+from prosaic.app import (
+    BookSelectModal,
+    ChapterSelectModal,
+    FileFindModal,
+    HelpScreen,
+    NewPieceModal,
+    StartWritingModal,
+)
 from prosaic.config import get_active_profile, get_last_file, set_last_file
 from prosaic.core.metrics import MetricsTracker
 from prosaic.screens.editor import EditorScreen
@@ -121,7 +128,22 @@ class DashboardScreen(Screen, inherit_bindings=False):
         self.app.push_screen(NewPieceModal(), callback=self._make_open_callback())
 
     def action_new_book(self) -> None:
-        self.app.push_screen(NewBookModal(), callback=self._make_open_callback())
+        self.app.push_screen(BookSelectModal(), callback=self._handle_book_selected)
+
+    def _handle_book_selected(self, result: Path | None) -> None:
+        if result is None:
+            return
+        if result.is_dir():
+            self.app.push_screen(
+                ChapterSelectModal(result),
+                callback=self._handle_chapter_selected,
+            )
+        else:
+            self.app._open_editor(result)
+
+    def _handle_chapter_selected(self, result: Path | None) -> None:
+        if result:
+            self.app._open_editor(result)
 
     def action_continue_writing(self) -> None:
         if self.last_file and self.last_file.exists():
