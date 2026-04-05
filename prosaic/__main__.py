@@ -273,6 +273,10 @@ def main(
 
         set_active_profile(result["active_profile"])
 
+    if config.get("app_version") != current_version:
+        config["app_version"] = current_version
+        save_config(config)
+
     if light is None:
         profile_config = get_profile_config(get_active_profile())
         light_mode = profile_config.get("theme", "light") == "light"
