@@ -48,6 +48,29 @@ ARCHIVE STRUCTURE
     .git/           Version control
 
 
+BOOKS
+-----
+
+Each book is a directory in books/ with the following structure:
+
+  my-book/
+    chapters/         Individual chapter files
+      chapter-one.md
+      chapter-two.md
+    chapters.md       Chapter reading order (one filename per line)
+    manuscript.md     Auto-generated compilation (read-only)
+
+Working on a book:
+  - Press b on dashboard to open book selection
+  - Select or create a book, then select or create a chapter
+  - Manuscript auto-compiles on save and when leaving a chapter
+  - Press m in chapter selection to compile manually
+
+Upgrading from v1.3.4 or older? Legacy books (single .md files)
+are automatically migrated to this structure on first open.
+Your original file is preserved with a .bak extension.
+
+
 PROFILES
 --------
 

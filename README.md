@@ -104,6 +104,31 @@ Manage profiles from the dashboard menu (`m` key) or edit in `~/.config/prosaic/
 
 **Upgrading from v1.1.1 or older?** Your existing setup is automatically preserved as the "default" profile. On first launch after upgrading, you'll be offered the option to set up additional profiles or rename your default.
 
+## Books
+
+Books are long-form writing projects stored as directories in your archive's `books/` folder.
+
+```
+my-book/
+  chapters/               Individual chapter files
+    chapter-one.md
+    chapter-two.md
+  chapters.md             Chapter reading order (one filename per line)
+  manuscript.md           Auto-generated compilation (read-only)
+```
+
+Working on a book:
+
+1. Press `b` on the dashboard to open book selection
+2. Select an existing book or create a new one
+3. Select an existing chapter or create a new one
+4. The manuscript auto-compiles on every save and when you leave a chapter
+5. Press `m` in chapter selection to compile manually at any time
+
+The manuscript is read-only in Prosaic — edit your chapters, not the manuscript directly.
+
+**Upgrading from v1.3.4 or older?** Legacy books (single `.md` files) are automatically migrated to this structure on first open. Your original file is preserved with a `.bak` extension.
+
 ## Keybindings
 
 | Category | Key | Action |
@@ -122,6 +147,7 @@ Manage profiles from the dashboard menu (`m` key) or edit in `~/.config/prosaic/
 | Editor | `Ctrl+o` | Toggle outline |
 | Editor | `Ctrl+p` | Key palette |
 | Editor | `Ctrl+s` | Save |
+| Editor | `Ctrl+m` | Compile manuscript (books only) |
 | Editor | `Ctrl+q` | Go home |
 | Editor | `F1` | Help |
 | Editor | `F5` | Focus mode |
