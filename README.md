@@ -1,5 +1,6 @@
 # Prosaic
 
+[![CANDOR: copilot](https://img.shields.io/badge/䷼%20CANDOR-copilot-fee2e2?labelColor=fee2e2)](https://candor.md)
 [![Build](https://img.shields.io/github/actions/workflow/status/DeepanshKhurana/Prosaic/ci.yml?label=build)](https://github.com/DeepanshKhurana/Prosaic/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
