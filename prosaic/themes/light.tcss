@@ -429,6 +429,12 @@ TextArea > .text-area--cursor-gutter {
     margin-right: 1;
 }
 
+#statusbar > #spell {
+    color: $text-muted;
+    width: auto;
+    margin-left: 1;
+}
+
 .spacer {
     width: 1fr;
 }

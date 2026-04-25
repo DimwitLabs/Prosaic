@@ -153,6 +153,7 @@ The manuscript is read-only in Prosaic — edit your chapters, not the manuscrip
 | Editor | `F1` | Help |
 | Editor | `F5` | Focus mode |
 | Editor | `F6` | Reader mode |
+| Editor | `F7` | Toggle spell check |
 | Writing | `Ctrl+z` | Undo |
 | Writing | `Ctrl+y` | Redo |
 | Writing | `Ctrl+x` | Cut |

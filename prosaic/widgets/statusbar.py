@@ -61,12 +61,14 @@ class StatusBar(Horizontal):
     characters: reactive[int] = reactive(0)
     modified: reactive[bool] = reactive(False)
     git_status: reactive[str] = reactive("")
+    spell_check: reactive[bool] = reactive(True)
 
     def compose(self):
         yield Static("○", id="autosave")
         yield Static("untitled", id="filename")
         yield Static("", id="modified")
         yield Static("", id="git")
+        yield Static("spell:on", id="spell")
         yield Static("", classes="spacer")
         yield Static("0 words", id="word-count")
         yield Static("·", classes="sep")
@@ -86,6 +88,9 @@ class StatusBar(Horizontal):
             )
             self.query_one("#word-count", Static).update(f"{self.words:,} words")
             self.query_one("#char-count", Static).update(f"{self.characters:,} chars")
+            self.query_one("#spell", Static).update(
+                "spell:on" if self.spell_check else "spell:off"
+            )
         except Exception:
             pass
 
@@ -116,6 +121,14 @@ class StatusBar(Horizontal):
     def watch_characters(self, chars: int) -> None:
         try:
             self.query_one("#char-count", Static).update(f"{chars:,} chars")
+        except Exception:
+            pass
+
+    def watch_spell_check(self, enabled: bool) -> None:
+        try:
+            self.query_one("#spell", Static).update(
+                "spell:on" if enabled else "spell:off"
+            )
         except Exception:
             pass
 
