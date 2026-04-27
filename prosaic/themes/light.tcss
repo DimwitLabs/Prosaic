@@ -416,11 +416,13 @@ TextArea > .text-area--cursor-gutter {
 #statusbar > #modified {
     color: $warning;
     width: auto;
+    margin-left: 1;
 }
 
 #statusbar > #git {
     color: $secondary;
     width: auto;
+    margin-left: 1;
 }
 
 #statusbar > #autosave {
