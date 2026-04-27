@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "prosaic-app"
-version = "1.4.5"
+version = "1.5.0"
 description = "A writer-first terminal writing app"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -29,7 +29,7 @@ dependencies = [
     "click>=8.1.0",
     "platformdirs>=4.0.0",
     "gitpython>=3.1.0",
-    "pyspellchecker>=0.8.0",
+    "phunspell>=0.1.6",
 ]
 
 [project.optional-dependencies]
@@ -53,7 +53,7 @@ where = ["."]
 exclude = ["build*", "tests*"]
 
 [tool.setuptools.package-data]
-prosaic = ["themes/*.tcss", "LICENSE", "REFERENCE"]
+prosaic = ["themes/*.tcss", "LICENSE", "REFERENCE", "VALID_LANGUAGES"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

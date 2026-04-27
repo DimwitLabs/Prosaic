@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-04-27
+
+### Added
+
+- Spell check now supports 80+ languages powered by hunspell, including Hungarian, Arabic, Polish, French, and many more. Language is set per profile during setup and can be changed any time in manage profiles.
+- Spell check language selection is part of the setup wizard and the new profile flow.
+- Existing users are prompted to set a language on first launch after upgrading, with the option to configure each profile individually.
+- `--languages` flag lists all supported language codes with names.
+- Spellcheck settings persist per profile.
+- Spell check on/off toggle added to edit and new profile modals (`ctrl+k`).
+- SPELL CHECK section added to `--reference`.
+
 ## [1.4.5] - 2026-04-27
 
 ### Added
