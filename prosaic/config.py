@@ -15,6 +15,34 @@ except ImportError:
 
 _active_profile: str = "default"
 _just_migrated: bool = False
+_runtime_config: dict | None = None
+
+def _load_valid_languages() -> tuple[frozenset[str], dict[str, str]]:
+    path = Path(__file__).parent / "VALID_LANGUAGES"
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+        codes = {}
+        for line in lines:
+            parts = line.split("\t", 1)
+            if len(parts) == 2:
+                codes[parts[0].strip()] = parts[1].strip()
+        return frozenset(codes.keys()), codes
+    except OSError:
+        return frozenset({"en_US", "en_GB"}), {"en_US": "English (US)", "en_GB": "English (Great Britain)"}
+
+VALID_LANGUAGE_CODES, LANGUAGE_NAMES = _load_valid_languages()
+
+
+def get_spell_check_enabled(profile_name: str | None = None) -> bool:
+    """Return whether spell check is enabled for a profile."""
+    return get_profile_config(profile_name).get("spell_check_enabled", True)
+
+
+def set_spell_check_enabled(enabled: bool, profile_name: str | None = None) -> None:
+    """Persist spell check enabled state for a profile."""
+    profile = get_profile_config(profile_name)
+    profile["spell_check_enabled"] = enabled
+    save_profile_config(profile, profile_name)
 
 
 def get_active_profile() -> str:
@@ -123,8 +151,16 @@ def migrate_config(config: dict) -> dict:
 def load_config() -> dict:
     """Load configuration from settings.json.
 
-    Automatically migrates legacy configs to v2 format.
+    Migrates legacy configs to v2 format in memory. The migrated config is
+    cached and only written to disk when save_config() is called explicitly
+    (after setup completes), so the user's original file is never overwritten
+    until they finish setup.
     """
+    global _runtime_config, _just_migrated
+
+    if _runtime_config is not None:
+        return _runtime_config
+
     config_path = get_config_path()
     if not config_path.exists():
         return {}
@@ -135,20 +171,21 @@ def load_config() -> dict:
         return {}
 
     if "app_version" not in config and config.get("setup_complete"):
-        global _just_migrated
         _just_migrated = True
         backup_config()
         config = migrate_config(config)
-        save_config(config)
+        _runtime_config = config  # cache in memory; main() saves after setup
 
     return config
 
 
 def save_config(config: dict) -> None:
     """Save configuration to settings.json."""
+    global _runtime_config
     config_path = get_config_path()
     config_path.parent.mkdir(parents=True, exist_ok=True)
     write_text(config_path, json.dumps(config, indent=2))
+    _runtime_config = None  # clear cache; disk is now authoritative
 
 
 def get_profile_config(profile_name: str | None = None) -> dict:
@@ -304,6 +341,16 @@ def set_last_file(path: Path) -> None:
     profile = get_profile_config()
     profile["last_file"] = str(path)
     save_profile_config(profile)
+
+
+def needs_language_setup(profile_name: str | None = None) -> bool:
+    """Return True if this profile has no spell_language set yet."""
+    return "spell_language" not in get_profile_config(profile_name)
+
+
+def profiles_needing_language_setup() -> list[str]:
+    """Return all profile names that have no spell_language set."""
+    return [p for p in list_profiles() if needs_language_setup(p)]
 
 
 def ensure_workspace() -> None:

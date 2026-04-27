@@ -12,7 +12,7 @@ from textual.screen import Screen
 from textual.widgets import Static, TextArea
 
 from prosaic.app import HelpScreen
-from prosaic.config import get_books_dir, get_workspace_dir
+from prosaic.config import get_books_dir, get_profile_config, get_workspace_dir, get_spell_check_enabled, set_spell_check_enabled
 from prosaic.core import count_characters, count_words
 from prosaic.core.metrics import MetricsTracker
 from prosaic.utils import read_text, write_text
@@ -67,6 +67,8 @@ class EditorScreen(Screen, inherit_bindings=False):
 
     def compose(self) -> ComposeResult:
         ta_theme = "prosaic_light" if self._light_mode else "prosaic_dark"
+        profile = get_profile_config()
+        spell_lang = profile.get("spell_language", "en")
         with Horizontal(id="editor-layout"):
             yield FileTree(get_workspace_dir(), id="file-tree")
             with Vertical(id="editor-container"):
@@ -75,6 +77,7 @@ class EditorScreen(Screen, inherit_bindings=False):
                     language="markdown",
                     soft_wrap=True,
                     theme=ta_theme,
+                    spell_language=spell_lang,
                 )
             outline = OutlinePanel(id="outline")
             outline.display = False
@@ -82,9 +85,17 @@ class EditorScreen(Screen, inherit_bindings=False):
         yield StatusBar(id="statusbar")
 
     def on_mount(self) -> None:
-        editor = self.query_one("#editor", TextArea)
+        editor = self.query_one("#editor", SpellCheckTextArea)
         editor.focus()
         self.set_interval(10, self._autosave)
+
+        spell_enabled = get_spell_check_enabled()
+        editor.spell_check_enabled = spell_enabled
+        try:
+            statusbar = self.query_one("#statusbar", StatusBar)
+            statusbar.spell_check = spell_enabled
+        except Exception:
+            pass
 
         if self._initial_file and self._initial_file.exists():
             self._load_file(self._initial_file)
@@ -321,6 +332,7 @@ class EditorScreen(Screen, inherit_bindings=False):
     def action_toggle_spell(self) -> None:
         editor = self.query_one("#editor", SpellCheckTextArea)
         editor.spell_check_enabled = not editor.spell_check_enabled
+        set_spell_check_enabled(editor.spell_check_enabled)
         try:
             statusbar = self.query_one("#statusbar", StatusBar)
             statusbar.spell_check = editor.spell_check_enabled
