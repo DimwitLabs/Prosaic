@@ -77,16 +77,16 @@ def _run_spell_setup(profile_name: str) -> None:
     click.echo()
     click.echo("you can also view this later with:  prosaic --languages")
     click.echo()
-    lang = click.prompt(
-        f"language for '{profile_name}'",
-        default="en_US",
-        show_default=True,
-    ).strip()
-    if lang not in VALID_LANGUAGE_CODES:
-        click.secho(f"unknown language code '{lang}' — defaulting to en_US", fg="yellow")
-        lang = "en_US"
-    else:
-        click.secho(f"  {LANGUAGE_NAMES.get(lang, lang)}", fg="green")
+    while True:
+        lang = click.prompt(
+            f"language for '{profile_name}'",
+            default="en_US",
+            show_default=True,
+        ).strip()
+        if lang in VALID_LANGUAGE_CODES:
+            click.secho(f"  {LANGUAGE_NAMES.get(lang, lang)}", fg="green")
+            break
+        click.secho(f"  unknown code '{lang}' — please enter a valid language code", fg="red")
 
     data = get_profile_config(profile_name)
     data["spell_language"] = lang
@@ -98,16 +98,16 @@ def _run_spell_setup(profile_name: str) -> None:
         if click.confirm(f"configure other profiles now? ({', '.join(others)})", default=False):
             for other in others:
                 click.echo()
-                other_lang = click.prompt(
-                    f"language for '{other}'",
-                    default="en_US",
-                    show_default=True,
-                ).strip()
-                if other_lang not in VALID_LANGUAGE_CODES:
-                    click.secho(f"  unknown code '{other_lang}' — defaulting to en_US", fg="yellow")
-                    other_lang = "en_US"
-                else:
-                    click.secho(f"  {LANGUAGE_NAMES.get(other_lang, other_lang)}", fg="green")
+                while True:
+                    other_lang = click.prompt(
+                        f"language for '{other}'",
+                        default="en_US",
+                        show_default=True,
+                    ).strip()
+                    if other_lang in VALID_LANGUAGE_CODES:
+                        click.secho(f"  {LANGUAGE_NAMES.get(other_lang, other_lang)}", fg="green")
+                        break
+                    click.secho(f"  unknown code '{other_lang}' — please enter a valid language code", fg="red")
                 other_data = get_profile_config(other)
                 other_data["spell_language"] = other_lang
                 save_profile_config(other_data, other)

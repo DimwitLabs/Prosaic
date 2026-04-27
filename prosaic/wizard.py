@@ -126,12 +126,13 @@ def _setup_single_profile(name: str) -> dict:
         click.echo()
         click.echo("you can also view this later with:  prosaic --languages")
         click.echo()
-        raw = click.prompt("spell check language", default="en_US", show_default=True).strip()
-        if raw not in VALID_LANGUAGE_CODES:
-            click.secho(f"  unknown code '{raw}' — defaulting to en_US", fg="yellow")
-        else:
-            spell_language = raw
-            click.secho(f"  {LANGUAGE_NAMES.get(spell_language, spell_language)}", fg="green")
+        while True:
+            raw = click.prompt("spell check language", default="en_US", show_default=True).strip()
+            if raw in VALID_LANGUAGE_CODES:
+                spell_language = raw
+                click.secho(f"  {LANGUAGE_NAMES.get(spell_language, spell_language)}", fg="green")
+                break
+            click.secho(f"  unknown code '{raw}' — please enter a valid language code", fg="red")
 
     return {
         "archive_dir": str(archive_path),

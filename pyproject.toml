@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "prosaic-app"
-version = "1.5.0"
+version = "1.5.1"
 description = "A writer-first terminal writing app"
 readme = "README.md"
 requires-python = ">=3.11"

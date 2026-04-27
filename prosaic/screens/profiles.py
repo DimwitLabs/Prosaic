@@ -22,9 +22,6 @@ from prosaic.config import (
 )
 
 
-def _validated_language(lang: str) -> str:
-    return lang if lang in VALID_LANGUAGE_CODES else "en_US"
-
 
 class EditProfileModal(ModalScreen[bool]):
     """Modal for editing the current profile."""
@@ -75,7 +72,6 @@ class EditProfileModal(ModalScreen[bool]):
                 max_length=20,
                 id="language-input",
             )
-            yield Static("", id="language-error", classes="dialog-hint")
 
             yield Static(f"theme: {self._theme}  (ctrl+t) toggle", id="theme-display")
             default_marker = "yes" if self._is_default else "no"
@@ -115,11 +111,10 @@ class EditProfileModal(ModalScreen[bool]):
         if not new_name or not new_workspace:
             return
 
-        lang = _validated_language(raw_lang)
-        if lang != raw_lang:
-            self.query_one("#language-error", Static).update(
-                f"unknown language '{raw_lang}' — defaulting to en_US"
-            )
+        if raw_lang not in VALID_LANGUAGE_CODES:
+            self.notify(f"unknown language '{raw_lang}' — please enter a valid language code", severity="error")
+            return
+        lang = raw_lang
 
         workspace_path = Path(new_workspace).expanduser().resolve()
 
@@ -196,7 +191,6 @@ class NewProfileModal(ModalScreen[str | None]):
                 max_length=20,
                 id="language-input",
             )
-            yield Static("", id="language-error", classes="dialog-hint")
 
             yield Static("(enter) create  (esc) cancel", classes="dialog-hint")
 
@@ -227,11 +221,10 @@ class NewProfileModal(ModalScreen[str | None]):
         if name in list_profiles():
             return
 
-        lang = _validated_language(raw_lang)
-        if lang != raw_lang:
-            self.query_one("#language-error", Static).update(
-                f"unknown language '{raw_lang}' — defaulting to en_US"
-            )
+        if raw_lang not in VALID_LANGUAGE_CODES:
+            self.notify(f"unknown language '{raw_lang}' — please enter a valid language code", severity="error")
+            return
+        lang = raw_lang
 
         workspace_path = Path(workspace).expanduser().resolve()
 
