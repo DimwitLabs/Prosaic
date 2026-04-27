@@ -83,6 +83,19 @@ Each profile has its own archive, git remote, and theme.
 Manage from dashboard (m key) or edit settings.json.
 
 
+SPELL CHECK
+-----------
+
+Spell check is powered by hunspell and supports 80+ languages.
+Each profile has its own language setting.
+
+  F7                          Toggle spell check on/off
+  prosaic --languages         List all supported language codes
+
+Language is set per profile during setup or via manage profiles (m).
+Misspelled words are underlined in the editor.
+
+
 PANE DEFAULTS
 -------------
 

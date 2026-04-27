@@ -5,7 +5,7 @@ from pathlib import Path
 
 import click
 
-from prosaic.config import get_app_version, get_config_path, load_config
+from prosaic.config import get_app_version, get_config_path, load_config, VALID_LANGUAGE_CODES, LANGUAGE_NAMES
 from prosaic.utils import write_text
 
 try:
@@ -116,12 +116,31 @@ def _setup_single_profile(name: str) -> dict:
     use_light = click.confirm("use light theme as default?", default=True)
     theme = "light" if use_light else "dark"
 
+    click.echo()
+    spell_check_enabled = click.confirm("enable spell check?", default=True)
+    spell_language = "en_US"
+    if spell_check_enabled:
+        click.echo()
+        for code in sorted(VALID_LANGUAGE_CODES):
+            click.echo(f"  {code:<10}  {LANGUAGE_NAMES.get(code, '')}")
+        click.echo()
+        click.echo("you can also view this later with:  prosaic --languages")
+        click.echo()
+        raw = click.prompt("spell check language", default="en_US", show_default=True).strip()
+        if raw not in VALID_LANGUAGE_CODES:
+            click.secho(f"  unknown code '{raw}' — defaulting to en_US", fg="yellow")
+        else:
+            spell_language = raw
+            click.secho(f"  {LANGUAGE_NAMES.get(spell_language, spell_language)}", fg="green")
+
     return {
         "archive_dir": str(archive_path),
         "init_git": init_git,
         "git_remote": git_remote,
         "git_inherited": existing_git,
         "theme": theme,
+        "spell_check_enabled": spell_check_enabled,
+        "spell_language": spell_language,
     }
 
 

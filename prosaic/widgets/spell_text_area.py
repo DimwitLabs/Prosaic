@@ -3,9 +3,10 @@
 import re
 
 from rich.style import Style
-from spellchecker import SpellChecker
 from textual.binding import Binding
 from textual.reactive import reactive
+
+from phunspell import Phunspell
 from textual.widgets import TextArea
 from textual.widgets.text_area import TextAreaTheme
 
@@ -69,7 +70,7 @@ PROSAIC_DARK_TA = TextAreaTheme(
 )
 
 _SKIP_LINE = re.compile(r"^(#{1,6}\s|```|---|\s*[-*+]\s|\s*\d+\.\s|>\s|!\[)")
-_WORD = re.compile(r"\b([a-zA-Z']{3,})\b")
+_WORD = re.compile(r"\b([^\W\d_]{3,})\b", re.UNICODE)
 _SPELL_STYLE = Style(underline=True, color="#c24038")
 
 _BOLD_ASTERISK = re.compile(r"(\*\*)([^*]+)(\*\*)")
@@ -121,8 +122,9 @@ class SpellCheckTextArea(TextArea, inherit_bindings=False):
         Binding("ctrl+y", "redo", "redo", show=False),
     ]
 
-    def __init__(self, *args, **kwargs) -> None:
-        self._spell: SpellChecker = SpellChecker()
+    def __init__(self, *args, spell_language: str = "en", **kwargs) -> None:
+        self._spell_language = spell_language
+        self._spell = self._init_spell(spell_language)
         self._misspelled: dict[int, list[tuple[int, int]]] = {}
         self._md_highlights: dict[int, list[tuple[int, int, str]]] = {}
         requested_theme = kwargs.pop("theme", "prosaic_light")
@@ -130,6 +132,12 @@ class SpellCheckTextArea(TextArea, inherit_bindings=False):
         self.register_theme(PROSAIC_LIGHT_TA)
         self.register_theme(PROSAIC_DARK_TA)
         self.theme = requested_theme
+
+    def _init_spell(self, language: str):
+        try:
+            return Phunspell(language)
+        except Exception:
+            return None
 
     def _scan_inline_markdown(self, text: str) -> None:
         """Scan for inline markdown elements (bold, italic, code)."""
@@ -211,10 +219,12 @@ class SpellCheckTextArea(TextArea, inherit_bindings=False):
             if not stripped or _SKIP_LINE.match(stripped):
                 continue
 
+            if self._spell is None:
+                continue
             spans: list[tuple[int, int]] = []
             for m in _WORD.finditer(line):
-                word = m.group(1).strip("'")
-                if self._spell.unknown([word]):
+                word = m.group(1)
+                if not self._spell.lookup(word):
                     spans.append((m.start(), m.end()))
             if spans:
                 self._misspelled[row] = spans

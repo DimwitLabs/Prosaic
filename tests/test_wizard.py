@@ -105,12 +105,9 @@ class TestRunSetupSingleProfile:
 
     def test_single_profile_mode(self, tmp_workspace):
         """Returns correct structure in single profile mode."""
-        inputs = [
-            str(tmp_workspace),  # archive directory
-            "n",  # init git
-        ]
-        with patch("click.prompt", side_effect=inputs):
-            with patch("click.confirm", return_value=False):
+        with patch("click.prompt", side_effect=[str(tmp_workspace), "en_US"]):
+            with patch("click.confirm", side_effect=[False, False, True]):
+                # 1. init git? no  2. light theme? no  3. enable spell check? yes
                 result = wizard.run_setup(
                     profile_name="work",
                     single_profile_mode=True,
@@ -120,6 +117,7 @@ class TestRunSetupSingleProfile:
         assert "work" in result["profiles"]
         assert result["active_profile"] == "work"
         assert result["profiles"]["work"]["archive_dir"] == str(tmp_workspace)
+        assert result["profiles"]["work"]["spell_language"] == "en_US"
 
 
 class TestRunSetupFresh:
@@ -128,26 +126,29 @@ class TestRunSetupFresh:
     def test_fresh_single_profile(self, tmp_workspace):
         """Fresh install with single profile (no multi-profile)."""
         with patch("click.prompt") as mock_prompt:
-            mock_prompt.side_effect = [str(tmp_workspace)]
+            mock_prompt.side_effect = [str(tmp_workspace), "en_US"]
             with patch("click.confirm") as mock_confirm:
-                # 1. rename default? No
-                # 2. enable multiple profiles? No
-                # 3. init git? No
-                # 4. use light theme? Yes
-                mock_confirm.side_effect = [False, False, False, True]
+                # 1. rename default? no
+                # 2. enable multiple profiles? no
+                # 3. init git? no
+                # 4. use light theme? yes
+                # 5. enable spell check? yes
+                mock_confirm.side_effect = [False, False, False, True, True]
                 result = wizard.run_setup()
 
         assert "profiles" in result
         assert "default" in result["profiles"]
         assert result["active_profile"] == "default"
+        assert result["profiles"]["default"]["spell_language"] == "en_US"
+        assert result["profiles"]["default"]["spell_check_enabled"] is True
 
     def test_fresh_rename_default(self, tmp_workspace):
         """Fresh install with renamed default profile."""
         with patch("click.prompt") as mock_prompt:
-            mock_prompt.side_effect = ["personal", str(tmp_workspace)]
+            mock_prompt.side_effect = ["personal", str(tmp_workspace), "en_US"]
             with patch("click.confirm") as mock_confirm:
-                # 1. rename? yes, 2. multi? no, 3. git? no, 4. light theme? yes
-                mock_confirm.side_effect = [True, False, False, True]
+                # 1. rename? yes, 2. multi? no, 3. git? no, 4. light theme? yes, 5. spell? yes
+                mock_confirm.side_effect = [True, False, False, True, True]
                 result = wizard.run_setup()
 
         assert "personal" in result["profiles"]
@@ -161,25 +162,29 @@ class TestRunSetupFresh:
 
         with patch("click.prompt") as mock_prompt:
             mock_prompt.side_effect = [
-                "work",  # additional profile names (asked before setup)
+                "work",          # additional profile names
                 str(tmp_workspace),  # default archive
-                str(work_dir),  # work archive
+                "en_US",         # default spell language
+                str(work_dir),   # work archive
+                "hu_HU",         # work spell language
             ]
             with patch("click.confirm") as mock_confirm:
                 # 1. rename default? no
                 # 2. enable multi? yes
                 # 3. init git for default? no
                 # 4. light theme for default? yes
-                # 5. setup others now? yes
-                # 6. init git for work? no
-                # 7. light theme for work? no (dark)
-                mock_confirm.side_effect = [False, True, False, True, True, False, False]
+                # 5. enable spell check for default? yes
+                # 6. setup others now? yes
+                # 7. init git for work? no
+                # 8. light theme for work? no (dark)
+                # 9. enable spell check for work? yes
+                mock_confirm.side_effect = [False, True, False, True, True, True, False, False, True]
                 result = wizard.run_setup()
 
         assert "default" in result["profiles"]
         assert "work" in result["profiles"]
-        # Resolve paths for comparison
         assert Path(result["profiles"]["work"]["archive_dir"]).resolve() == work_dir.resolve()
+        assert result["profiles"]["work"]["spell_language"] == "hu_HU"
 
 
 class TestRunSetupExisting:
@@ -195,18 +200,17 @@ class TestRunSetupExisting:
 
         with patch("click.prompt") as mock_prompt:
             mock_prompt.side_effect = [
-                "work",  # additional profile names
-                str(new_dir),  # work archive
+                "work",       # additional profile names
+                str(new_dir), # work archive
+                "en_US",      # work spell language
             ]
             with patch("click.confirm") as mock_confirm:
-                # 1. rename default? no, 2. add more? yes, 3. git? no, 4. light theme? yes
-                mock_confirm.side_effect = [False, True, False, True]
+                # 1. rename default? no, 2. add more? yes, 3. git? no, 4. light theme? yes, 5. spell? yes
+                mock_confirm.side_effect = [False, True, False, True, True]
                 result = wizard.run_setup(existing_profiles=existing)
 
-        # Existing profiles preserved
         assert "default" in result["profiles"]
         assert result["profiles"]["default"]["archive_dir"] == "/home/user/Writing"
-        # New profile added
         assert "work" in result["profiles"]
         assert result["profiles"]["work"]["archive_dir"] == str(new_dir)
 

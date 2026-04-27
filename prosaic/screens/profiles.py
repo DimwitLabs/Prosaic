@@ -9,6 +9,7 @@ from textual.screen import ModalScreen, Screen
 from textual.widgets import Input, Static
 
 from prosaic.config import (
+    VALID_LANGUAGE_CODES,
     delete_profile,
     get_active_profile,
     list_profiles,
@@ -17,7 +18,12 @@ from prosaic.config import (
     rename_profile,
     save_config,
     save_profile_config,
+    get_spell_check_enabled,
 )
+
+
+def _validated_language(lang: str) -> str:
+    return lang if lang in VALID_LANGUAGE_CODES else "en_US"
 
 
 class EditProfileModal(ModalScreen[bool]):
@@ -27,6 +33,7 @@ class EditProfileModal(ModalScreen[bool]):
         Binding("escape", "cancel", "cancel"),
         Binding("ctrl+t", "toggle_theme", "toggle theme", priority=True),
         Binding("ctrl+d", "toggle_default", "toggle default", priority=True),
+        Binding("ctrl+k", "toggle_spell_check", "toggle spell check", priority=True),
     ]
 
     def __init__(self, profile_name: str, **kwargs) -> None:
@@ -34,6 +41,7 @@ class EditProfileModal(ModalScreen[bool]):
         self.profile_name = profile_name
         self.profile_config = get_profile_config(profile_name)
         self._theme = self.profile_config.get("theme", "light")
+        self._spell_check_enabled = self.profile_config.get("spell_check_enabled", True)
         config = load_config()
         self._is_default = config.get("active_profile") == profile_name
 
@@ -61,10 +69,20 @@ class EditProfileModal(ModalScreen[bool]):
                 id="git-remote-input",
             )
 
+            yield Static("spell language (e.g. en_US, hu_HU, fr_FR):")
+            yield Input(
+                value=self.profile_config.get("spell_language", "en_US"),
+                max_length=20,
+                id="language-input",
+            )
+            yield Static("", id="language-error", classes="dialog-hint")
+
             yield Static(f"theme: {self._theme}  (ctrl+t) toggle", id="theme-display")
             default_marker = "yes" if self._is_default else "no"
             yield Static(f"default: {default_marker}  (ctrl+d) toggle", id="default-display")
-            yield Static("(theme changes require restart)", classes="dialog-hint")
+            spell_marker = "on" if self._spell_check_enabled else "off"
+            yield Static(f"spell check: {spell_marker}  (ctrl+k) toggle", id="spell-check-display")
+            yield Static("(theme/language changes require restart)", classes="dialog-hint")
 
             yield Static("(enter) save  (esc) cancel", classes="dialog-hint")
 
@@ -74,6 +92,11 @@ class EditProfileModal(ModalScreen[bool]):
     def action_toggle_theme(self) -> None:
         self._theme = "dark" if self._theme == "light" else "light"
         self.query_one("#theme-display", Static).update(f"theme: {self._theme}  (ctrl+t) toggle")
+
+    def action_toggle_spell_check(self) -> None:
+        self._spell_check_enabled = not self._spell_check_enabled
+        marker = "on" if self._spell_check_enabled else "off"
+        self.query_one("#spell-check-display", Static).update(f"spell check: {marker}  (ctrl+k) toggle")
 
     def action_toggle_default(self) -> None:
         self._is_default = not self._is_default
@@ -87,9 +110,16 @@ class EditProfileModal(ModalScreen[bool]):
         new_name = self.query_one("#profile-name-input", Input).value.strip().lower()
         new_workspace = self.query_one("#workspace-input", Input).value.strip()
         git_remote = self.query_one("#git-remote-input", Input).value.strip()
+        raw_lang = self.query_one("#language-input", Input).value.strip()
 
         if not new_name or not new_workspace:
             return
+
+        lang = _validated_language(raw_lang)
+        if lang != raw_lang:
+            self.query_one("#language-error", Static).update(
+                f"unknown language '{raw_lang}' — defaulting to en_US"
+            )
 
         workspace_path = Path(new_workspace).expanduser().resolve()
 
@@ -102,6 +132,8 @@ class EditProfileModal(ModalScreen[bool]):
         profile["archive_dir"] = str(workspace_path)
         profile["git_remote"] = git_remote
         profile["theme"] = self._theme
+        profile["spell_language"] = lang
+        profile["spell_check_enabled"] = self._spell_check_enabled
         if "init_git" not in profile:
             profile["init_git"] = True
         save_profile_config(profile, target_name)
@@ -123,11 +155,13 @@ class NewProfileModal(ModalScreen[str | None]):
     BINDINGS = [
         Binding("escape", "cancel", "cancel"),
         Binding("ctrl+t", "toggle_theme", "toggle theme", priority=True),
+        Binding("ctrl+k", "toggle_spell_check", "toggle spell check", priority=True),
     ]
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
         self._theme = "light"
+        self._spell_check_enabled = True
 
     def compose(self) -> ComposeResult:
         with Vertical(id="dialog"):
@@ -152,6 +186,17 @@ class NewProfileModal(ModalScreen[str | None]):
             )
 
             yield Static(f"theme: {self._theme}  (ctrl+t) toggle", id="theme-display")
+            spell_marker = "on" if self._spell_check_enabled else "off"
+            yield Static(f"spell check: {spell_marker}  (ctrl+k) toggle", id="spell-check-display")
+
+            yield Static("spell language (e.g. en_US, hu_HU, fr_FR):")
+            yield Input(
+                value="en_US",
+                placeholder="en_US",
+                max_length=20,
+                id="language-input",
+            )
+            yield Static("", id="language-error", classes="dialog-hint")
 
             yield Static("(enter) create  (esc) cancel", classes="dialog-hint")
 
@@ -162,6 +207,11 @@ class NewProfileModal(ModalScreen[str | None]):
         self._theme = "dark" if self._theme == "light" else "light"
         self.query_one("#theme-display", Static).update(f"theme: {self._theme}  (ctrl+t) toggle")
 
+    def action_toggle_spell_check(self) -> None:
+        self._spell_check_enabled = not self._spell_check_enabled
+        marker = "on" if self._spell_check_enabled else "off"
+        self.query_one("#spell-check-display", Static).update(f"spell check: {marker}  (ctrl+k) toggle")
+
     def on_input_submitted(self, event: Input.Submitted) -> None:
         self._create_profile()
 
@@ -169,12 +219,19 @@ class NewProfileModal(ModalScreen[str | None]):
         name = self.query_one("#profile-name-input", Input).value.strip().lower()
         workspace = self.query_one("#workspace-input", Input).value.strip()
         git_remote = self.query_one("#git-remote-input", Input).value.strip()
+        raw_lang = self.query_one("#language-input", Input).value.strip()
 
         if not name or not workspace:
             return
 
         if name in list_profiles():
             return
+
+        lang = _validated_language(raw_lang)
+        if lang != raw_lang:
+            self.query_one("#language-error", Static).update(
+                f"unknown language '{raw_lang}' — defaulting to en_US"
+            )
 
         workspace_path = Path(workspace).expanduser().resolve()
 
@@ -183,6 +240,8 @@ class NewProfileModal(ModalScreen[str | None]):
             "init_git": True,
             "git_remote": git_remote,
             "theme": self._theme,
+            "spell_language": lang,
+            "spell_check_enabled": self._spell_check_enabled,
         }
         save_profile_config(profile_data, name)
 
@@ -256,6 +315,10 @@ class ProfilesScreen(Screen):
                 else:
                     yield Static(f"  git: {'yes' if git_enabled else 'no'}", classes="profile-detail")
                 yield Static(f"  theme: {theme_name}", classes="profile-detail")
+                spell_lang = config.get("spell_language", "en_US")
+                spell_enabled = config.get("spell_check_enabled", True)
+                yield Static(f"  language: {spell_lang}", classes="profile-detail")
+                yield Static(f"  spell check: {'on' if spell_enabled else 'off'}", classes="profile-detail")
 
                 if other_profiles:
                     yield Static("", classes="profile-spacer")

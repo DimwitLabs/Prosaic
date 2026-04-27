@@ -8,19 +8,25 @@ from textual.binding import Binding
 from textual.screen import ModalScreen
 
 from prosaic.config import (
+    LANGUAGE_NAMES,
+    VALID_LANGUAGE_CODES,
     ensure_workspace,
     get_active_profile,
     get_app_version,
     get_notes_path,
     get_profile_config,
     get_workspace_dir,
-    list_profiles,
     load_config,
+    needs_language_setup,
+    profiles_needing_language_setup,
     save_config,
+    save_profile_config,
     set_active_profile,
     set_last_file,
+    set_spell_check_enabled,
     was_just_migrated,
 )
+
 from prosaic.core.metrics import MetricsTracker
 from prosaic.screens import DashboardScreen, EditorScreen
 from prosaic.themes import PROSAIC_DARK_CSS, PROSAIC_LIGHT_CSS
@@ -45,6 +51,66 @@ def _get_license_text() -> str:
     """Read LICENSE file from package."""
     content = read_text(Path(__file__).parent / "LICENSE")
     return _wrap_output(content)
+
+
+def _run_spell_setup(profile_name: str) -> None:
+    """Run the one-time spell check setup for existing users upgrading to 1.5.0."""
+    current_version = get_app_version()
+    click.echo()
+    click.secho(f"welcome to prosaic {current_version}!", fg="yellow", bold=True)
+    click.echo(
+        "this version brings a more powerful spell check with support for"
+        " 80+ languages powered by hunspell."
+    )
+    click.echo()
+
+    enable = click.confirm("enable spell check?", default=True)
+    set_spell_check_enabled(enable, profile_name)
+
+    if not enable:
+        return
+
+    click.echo()
+    for code in sorted(VALID_LANGUAGE_CODES):
+        name = LANGUAGE_NAMES.get(code, "")
+        click.echo(f"  {code:<10}  {name}")
+    click.echo()
+    click.echo("you can also view this later with:  prosaic --languages")
+    click.echo()
+    lang = click.prompt(
+        f"language for '{profile_name}'",
+        default="en_US",
+        show_default=True,
+    ).strip()
+    if lang not in VALID_LANGUAGE_CODES:
+        click.secho(f"unknown language code '{lang}' — defaulting to en_US", fg="yellow")
+        lang = "en_US"
+    else:
+        click.secho(f"  {LANGUAGE_NAMES.get(lang, lang)}", fg="green")
+
+    data = get_profile_config(profile_name)
+    data["spell_language"] = lang
+    save_profile_config(data, profile_name)
+
+    others = [p for p in profiles_needing_language_setup() if p != profile_name]
+    if others:
+        click.echo()
+        if click.confirm(f"configure other profiles now? ({', '.join(others)})", default=False):
+            for other in others:
+                click.echo()
+                other_lang = click.prompt(
+                    f"language for '{other}'",
+                    default="en_US",
+                    show_default=True,
+                ).strip()
+                if other_lang not in VALID_LANGUAGE_CODES:
+                    click.secho(f"  unknown code '{other_lang}' — defaulting to en_US", fg="yellow")
+                    other_lang = "en_US"
+                else:
+                    click.secho(f"  {LANGUAGE_NAMES.get(other_lang, other_lang)}", fg="green")
+                other_data = get_profile_config(other)
+                other_data["spell_language"] = other_lang
+                save_profile_config(other_data, other)
 
 
 class ProsaicApp(App):
@@ -178,6 +244,7 @@ class ProsaicApp(App):
 @click.option("--setup", is_flag=True, help="Run setup wizard again")
 @click.option("--profile", default=None, help="Use a named profile (see --profiles)")
 @click.option("--profiles", "show_profiles", is_flag=True, help="List available profiles")
+@click.option("--languages", "show_languages", is_flag=True, help="List valid spell check language codes")
 @click.option("--reference", is_flag=True, help="Show reference")
 @click.option("--license", "show_license", is_flag=True, help="Show MIT license")
 @click.argument("file", required=False, type=click.Path())
@@ -186,6 +253,7 @@ def main(
     setup: bool,
     profile: str | None,
     show_profiles: bool,
+    show_languages: bool,
     reference: bool,
     show_license: bool,
     file: str | None,
@@ -206,6 +274,16 @@ def main(
             click.echo("no profiles configured. run: prosaic --setup")
         return
 
+    if show_languages:
+        click.echo("valid spell check language codes:")
+        click.echo()
+        for code in sorted(VALID_LANGUAGE_CODES):
+            name = LANGUAGE_NAMES.get(code, "")
+            click.echo(f"  {code:<10}  {name}")
+        click.echo()
+        click.echo("set language in manage profiles (m) or via  prosaic --profile <name>")
+        return
+
     if reference:
         click.echo(_get_reference_text())
         return
@@ -223,16 +301,16 @@ def main(
 
     if is_legacy_upgrade and not setup:
         click.echo()
-        click.secho(f"new in prosaic {current_version}!", fg="yellow", bold=True)
+        click.secho(f"hello from prosaic {current_version}!", fg="yellow", bold=True)
         click.echo()
-        click.echo("this version introduces profiles - separate workspaces for")
+        click.echo("looks like you just upgraded. we've automatically migrated")
+        click.echo("your config to the new format and taken a backup just in case.")
+        click.echo()
+        click.echo("this version introduces profiles — separate workspaces for")
         click.echo("different writing projects (personal, work, fiction, etc.)")
-        click.echo()
         click.echo("your existing setup has been preserved as the 'default' profile.")
         click.echo()
-
-        click.echo("would you like to learn about profiles and set up more now?")
-        click.echo("you can always do it later with prosaic --setup")
+        click.echo("you can always run  prosaic --setup  to configure more.")
         click.echo()
         run_profiles_setup = click.confirm("set up profiles now?", default=False)
 
@@ -272,10 +350,14 @@ def main(
                 setup_workspace(profile_data)
 
         set_active_profile(result["active_profile"])
+        profile_name = result["active_profile"]
 
     if config.get("app_version") != current_version:
         config["app_version"] = current_version
         save_config(config)
+
+    if needs_language_setup(profile_name):
+        _run_spell_setup(profile_name)
 
     if light is None:
         profile_config = get_profile_config(get_active_profile())
