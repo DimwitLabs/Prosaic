@@ -6,6 +6,15 @@ from pathlib import Path
 import pytest
 
 
+@pytest.fixture(autouse=True)
+def clear_runtime_config_cache():
+    """Reset the in-memory config cache between tests."""
+    from prosaic import config as _config
+    _config._runtime_config = None
+    yield
+    _config._runtime_config = None
+
+
 @pytest.fixture
 def tmp_config_dir(tmp_path, monkeypatch):
     """Create a temporary config directory and patch get_config_dir."""

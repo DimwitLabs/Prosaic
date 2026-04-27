@@ -496,3 +496,87 @@ class TestUpdateProfileWorkspace:
         write_config(v2_config)
         result = config.update_profile_workspace("nonexistent", "/path")
         assert result is False
+
+
+class TestValidLanguageCodes:
+    """Tests for VALID_LANGUAGE_CODES constant."""
+
+    def test_contains_english(self):
+        assert "en_US" in config.VALID_LANGUAGE_CODES
+
+    def test_contains_hungarian(self):
+        assert "hu_HU" in config.VALID_LANGUAGE_CODES
+
+    def test_all_codes_are_strings(self):
+        for code in config.VALID_LANGUAGE_CODES:
+            assert isinstance(code, str)
+
+    def test_is_non_empty(self):
+        assert len(config.VALID_LANGUAGE_CODES) > 50
+
+
+class TestNeedsLanguageSetup:
+    """Tests for needs_language_setup()."""
+
+    def test_returns_true_when_missing(self, write_config, v2_config):
+        """Returns True when spell_language is absent from profile."""
+        write_config(v2_config)
+        assert config.needs_language_setup("default") is True
+
+    def test_returns_false_when_present(self, write_config, v2_config):
+        """Returns False when spell_language is set."""
+        v2_config["profiles"]["default"]["spell_language"] = "en"
+        write_config(v2_config)
+        assert config.needs_language_setup("default") is False
+
+    def test_uses_active_profile_when_none(self, write_config, v2_config):
+        """Uses active profile when profile_name is None."""
+        write_config(v2_config)
+        config.set_active_profile("default")
+        assert config.needs_language_setup(None) is True
+
+
+class TestProfilesNeedingLanguageSetup:
+    """Tests for profiles_needing_language_setup()."""
+
+    def test_returns_all_when_none_configured(self, write_config):
+        """Returns all profiles when none have spell_language."""
+        cfg = {
+            "app_version": "1.0.0",
+            "active_profile": "default",
+            "profiles": {
+                "default": {"archive_dir": "/a"},
+                "work": {"archive_dir": "/b"},
+            },
+        }
+        write_config(cfg)
+        result = config.profiles_needing_language_setup()
+        assert set(result) == {"default", "work"}
+
+    def test_excludes_configured_profiles(self, write_config):
+        """Excludes profiles that already have spell_language."""
+        cfg = {
+            "app_version": "1.0.0",
+            "active_profile": "default",
+            "profiles": {
+                "default": {"archive_dir": "/a", "spell_language": "en"},
+                "work": {"archive_dir": "/b"},
+            },
+        }
+        write_config(cfg)
+        result = config.profiles_needing_language_setup()
+        assert result == ["work"]
+
+    def test_returns_empty_when_all_configured(self, write_config):
+        """Returns empty list when all profiles have spell_language."""
+        cfg = {
+            "app_version": "1.0.0",
+            "active_profile": "default",
+            "profiles": {
+                "default": {"archive_dir": "/a", "spell_language": "en"},
+                "work": {"archive_dir": "/b", "spell_language": "hu"},
+            },
+        }
+        write_config(cfg)
+        result = config.profiles_needing_language_setup()
+        assert result == []
