@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.5] - 2026-04-27
+
+### Added
+
+- Status bar now shows `spellcheck:on` / `spellcheck:off` indicator. Thanks, [@chioloenrico](https://github.com/chioloenrico)!
+- Git status widget is hidden when not in a git repository, preventing a phantom gap in the status bar.
+- Status bar spacing relies entirely on CSS margins for consistency.
+
 ## [1.4.4] - 2026-04-27
 
 ### Changed

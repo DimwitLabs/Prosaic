@@ -32,6 +32,7 @@ class EditorScreen(Screen, inherit_bindings=False):
         Binding("ctrl+o", "toggle_outline", "outline"),
         Binding("f5", "toggle_focus", "focus mode"),
         Binding("f6", "toggle_reader", "reader mode"),
+        Binding("f7", "toggle_spell", "spell check"),
         Binding("f1", "show_help", "help"),
     ]
 
@@ -316,6 +317,18 @@ class EditorScreen(Screen, inherit_bindings=False):
             self.reader_mode = True
             self.focus_mode = False
             self.notify("Reader mode on")
+
+    def action_toggle_spell(self) -> None:
+        editor = self.query_one("#editor", SpellCheckTextArea)
+        editor.spell_check_enabled = not editor.spell_check_enabled
+        try:
+            statusbar = self.query_one("#statusbar", StatusBar)
+            statusbar.spell_check = editor.spell_check_enabled
+        except Exception:
+            pass
+        self.notify(
+            "Spell check on" if editor.spell_check_enabled else "Spell check off"
+        )
 
     def action_save(self) -> None:
         self._save_file()

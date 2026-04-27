@@ -5,6 +5,7 @@ import re
 from rich.style import Style
 from spellchecker import SpellChecker
 from textual.binding import Binding
+from textual.reactive import reactive
 from textual.widgets import TextArea
 from textual.widgets.text_area import TextAreaTheme
 
@@ -81,6 +82,8 @@ _INLINE_CODE = re.compile(r"(`)([^`]+)(`)")
 
 class SpellCheckTextArea(TextArea, inherit_bindings=False):
     """TextArea with live spell-check underlines and markdown highlighting."""
+
+    spell_check_enabled: reactive[bool] = reactive(True)
 
     BINDINGS = [
         Binding("ctrl+a", "select_all", "select all"),
@@ -183,6 +186,8 @@ class SpellCheckTextArea(TextArea, inherit_bindings=False):
 
     def _scan_spelling(self, text: str) -> None:
         self._misspelled.clear()
+        if not self.spell_check_enabled:
+            return
         in_frontmatter = False
         in_code_block = False
 
@@ -236,6 +241,13 @@ class SpellCheckTextArea(TextArea, inherit_bindings=False):
                 self._highlights[row] = []
             for col_s, col_e, style in highlights:
                 self._highlights[row].append((col_s, col_e, style))
+
+    def watch_spell_check_enabled(self, enabled: bool) -> None:
+        self._build_highlight_map()
+        self.refresh()
+
+    def action_toggle_spell_check(self) -> None:
+        self.spell_check_enabled = not self.spell_check_enabled
 
     def action_toggle_comment(self) -> None:
         """Toggle markdown comment on current line."""

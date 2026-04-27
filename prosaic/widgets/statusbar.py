@@ -61,12 +61,14 @@ class StatusBar(Horizontal):
     characters: reactive[int] = reactive(0)
     modified: reactive[bool] = reactive(False)
     git_status: reactive[str] = reactive("")
+    spell_check: reactive[bool] = reactive(True)
 
     def compose(self):
         yield Static("○", id="autosave")
         yield Static("untitled", id="filename")
         yield Static("", id="modified")
         yield Static("", id="git")
+        yield Static("spellcheck:on", id="spell")
         yield Static("", classes="spacer")
         yield Static("0 words", id="word-count")
         yield Static("·", classes="sep")
@@ -79,13 +81,16 @@ class StatusBar(Horizontal):
         try:
             self.query_one("#filename", Static).update(self.filename)
             self.query_one("#modified", Static).update(
-                " [+]" if self.modified else " [·]"
+                "[+]" if self.modified else "[·]"
             )
-            self.query_one("#git", Static).update(
-                f"  {self.git_status}" if self.git_status else ""
-            )
+            git = self.query_one("#git", Static)
+            git.update(self.git_status)
+            git.display = bool(self.git_status)
             self.query_one("#word-count", Static).update(f"{self.words:,} words")
             self.query_one("#char-count", Static).update(f"{self.characters:,} chars")
+            self.query_one("#spell", Static).update(
+                "spellcheck:on" if self.spell_check else "spellcheck:off"
+            )
         except Exception:
             pass
 
@@ -97,13 +102,15 @@ class StatusBar(Horizontal):
 
     def watch_modified(self, modified: bool) -> None:
         try:
-            self.query_one("#modified", Static).update(" [+]" if modified else " [·]")
+            self.query_one("#modified", Static).update("[+]" if modified else "[·]")
         except Exception:
             pass
 
     def watch_git_status(self, status: str) -> None:
         try:
-            self.query_one("#git", Static).update(f"  {status}" if status else "")
+            git = self.query_one("#git", Static)
+            git.update(status)
+            git.display = bool(status)
         except Exception:
             pass
 
@@ -116,6 +123,14 @@ class StatusBar(Horizontal):
     def watch_characters(self, chars: int) -> None:
         try:
             self.query_one("#char-count", Static).update(f"{chars:,} chars")
+        except Exception:
+            pass
+
+    def watch_spell_check(self, enabled: bool) -> None:
+        try:
+            self.query_one("#spell", Static).update(
+                "spellcheck:on" if enabled else "spellcheck:off"
+            )
         except Exception:
             pass
 
