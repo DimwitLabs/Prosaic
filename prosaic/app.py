@@ -145,8 +145,9 @@ class NewPieceModal(CreateFileModal):
     def _get_initial_content(self, title: str) -> str:
         date_str = datetime.now().strftime("%Y-%m-%d")
         slug_str = self._slugify(title) if title else datetime.now().strftime("%Y%m%d%H%M%S")
+        display_title = title.replace("-", " ").title() if title else ""
         return f'''---
-title: "{title}"
+title: "{display_title}"
 date: {date_str}
 slug: {slug_str}
 ---
