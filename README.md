@@ -3,6 +3,7 @@
 [![AI-DECLARATION: copilot](https://img.shields.io/badge/䷼%20AI--DECLARATION-copilot-fee2e2?labelColor=fee2e2)](https://ai-declaration.md)
 [![Build](https://img.shields.io/github/actions/workflow/status/DeepanshKhurana/Prosaic/ci.yml?label=build)](https://github.com/DeepanshKhurana/Prosaic/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![Awesome CLI Apps](https://awesome.re/mentioned-badge.svg)](https://github.com/agarrharr/awesome-cli-apps#text-editors)
 
 A writer-first terminal writing app built with Python and Textual, built with the assistance of LLM/Copilot tools.
 
@@ -58,6 +59,7 @@ prosaic [OPTIONS] [FILE]
 | `--dark` | Use dark theme |
 | `--profile <name>` | Use a specific profile |
 | `--profiles` | List all profiles |
+| `--languages` | List all supported spell check languages |
 | `--setup` | Run setup wizard again |
 | `--reference` | Show reference |
 | `--license` | Show MIT license |
@@ -73,12 +75,15 @@ prosaic --dark ~/writing/draft.md
 ## Features
 
 - **Markdown-first**: Live outline, word counting
+- **Spell check**: 80+ languages powered by hunspell (F7 to toggle)
+- **Autosave**: Files automatically save every 10 seconds
 - **Focus mode**: Hide everything except your writing
 - **Reader mode**: Distraction-free reading
 - **Start writing**: Quick writing session with all panes open
 - **Continue writing**: Resume your last edited document
 - **Daily metrics**: Track words and characters written each day
 - **Profiles**: Separate workspaces for different projects
+- **Status bar**: Real-time indicators for spell check, autosave, git status, and save state
 - **Git-ready**: Archive is Git-initialized for versioning
 
 ## Profiles
@@ -100,10 +105,29 @@ Each profile has its own:
 - Archive directory
 - Git remote (optional)
 - Theme preference
+- Spell check language (80+ languages supported)
 
 Manage profiles from the dashboard menu (`m` key) or edit in `~/.config/prosaic/settings.json`.
 
 **Upgrading from v1.1.1 or older?** Your existing setup is automatically preserved as the "default" profile. On first launch after upgrading, you'll be offered the option to set up additional profiles or rename your default.
+
+## Spell Check
+
+Prosaic supports 80+ languages powered by hunspell, including English, Spanish, French, German, Arabic, Hungarian, Polish, and many more.
+
+```bash
+# List all supported languages
+prosaic --languages
+```
+
+Spell check settings:
+- Language is set per profile during setup
+- Toggle on/off with `F7` in the editor
+- Change language anytime in manage profiles (`m` key on dashboard)
+- Status bar shows `spellcheck:on` or `spellcheck:off`
+- Existing users are prompted to set a language on first launch after upgrading
+
+Common language codes: `en_US`, `en_GB`, `es_ES`, `fr_FR`, `de_DE`, `pt_BR`, `ar`, `hu_HU`, `pl_PL`, `ja`, `zh_CN`, `ru_RU`
 
 ## Books
 
@@ -174,6 +198,17 @@ The manuscript is read-only in Prosaic — edit your chapters, not the manuscrip
 | focus mode | hidden | hidden |
 | reader mode | hidden | hidden |
 
+## Status Bar
+
+The status bar at the bottom provides real-time information:
+
+- **Save state**: `[+]` (unsaved changes) or `[·]` (saved)
+- **Autosave indicator**: `○` (idle) or `●` (just saved) - files auto-save every 10 seconds
+- **Spell check**: `spellcheck:on` or `spellcheck:off` - toggle with `F7`
+- **Git status**: Shows current branch and changes (when in a git repository)
+- **Word/character count**: Live metrics as you type
+- **File type**: Current document type (piece/book/note/draft)
+
 ## Themes
 
 - **Prosaic Light** (default): Warm white background with brick accents
@@ -214,7 +249,7 @@ Example `settings.json`:
 
 ```json
 {
-  "app_version": "1.2.1",
+  "app_version": "1.5.1",
   "setup_complete": true,
   "active_profile": "default",
   "profiles": {
@@ -223,6 +258,8 @@ Example `settings.json`:
       "init_git": true,
       "git_remote": "git@github.com:you/writing.git",
       "theme": "light",
+      "spell_lang": "en_US",
+      "spell_check": true,
       "last_file": "/Users/you/Prosaic/pieces/2026-03-03-example.md"
     }
   }
@@ -234,7 +271,14 @@ Example `settings.json`:
 ```
 ~/Prosaic/              # Default archive (configurable)
   pieces/               # Pieces with preloaded markdown frontmatter
-  books/                # Long-form projects with Outline already open
+    2026-05-01-my-piece.md
+  books/                # Long-form projects (folder-based)
+    my-book/
+      chapters/         # Individual chapter files
+        chapter-one.md
+        chapter-two.md
+      chapters.md       # Chapter reading order
+      manuscript.md     # Auto-compiled (read-only)
   *.md                  # Drafts (loose files in root)
   notes.md              # Quick notes with auto date headers
   metrics.json          # Daily statistics for archival and display
