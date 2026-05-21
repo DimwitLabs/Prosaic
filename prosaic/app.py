@@ -68,7 +68,7 @@ press escape or q to close
 """
 
 
-class CreateFileModal(ModalScreen[Path | None]):
+class CreateFileModal(ModalScreen[tuple[Path, bool] | None]):
     """Base modal for creating files."""
 
     BINDINGS = [
@@ -127,7 +127,7 @@ class CreateFileModal(ModalScreen[Path | None]):
             self.notify(f"File already exists: {file_path.name}", severity="error")
             return
         write_text(file_path, self._get_initial_content(title))
-        self.dismiss(file_path)
+        self.dismiss((file_path, True))
 
     def action_cancel(self) -> None:
         self.dismiss(None)
@@ -174,7 +174,7 @@ class NewBookModal(CreateFileModal):
         books_dir = get_books_dir()
         books_dir.mkdir(parents=True, exist_ok=True)
         book_dir = create_book_structure(books_dir, title)
-        self.dismiss(book_dir)
+        self.dismiss((book_dir, True))
 
 
 class _BookItem(ListItem):
@@ -199,7 +199,7 @@ class _CreateNewBookItem(ListItem):
         super().__init__(Label("+ create new book"))
 
 
-class BookSelectModal(ModalScreen[Path | None]):
+class BookSelectModal(ModalScreen[tuple[Path, bool] | None]):
     """Modal for selecting or creating a book."""
 
     BINDINGS = [
@@ -235,12 +235,12 @@ class BookSelectModal(ModalScreen[Path | None]):
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         item = event.item
         if isinstance(item, _CreateNewBookItem):
-            def _on_created(book_dir: Path | None) -> None:
-                if book_dir:
-                    self.dismiss(book_dir)
+            def _on_created(result: tuple[Path, bool] | None) -> None:
+                if result:
+                    self.dismiss(result)
             self.app.push_screen(NewBookModal(), callback=_on_created)
         elif isinstance(item, _BookItem):
-            self.dismiss(item.path)
+            self.dismiss((item.path, False))
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
         find_list = self.query_one("#find-list", ListView)
@@ -255,12 +255,12 @@ class BookSelectModal(ModalScreen[Path | None]):
             return
 
         if isinstance(selected, _CreateNewBookItem):
-            def _on_created(book_dir: Path | None) -> None:
-                if book_dir:
-                    self.dismiss(book_dir)
+            def _on_created(result: tuple[Path, bool] | None) -> None:
+                if result:
+                    self.dismiss(result)
             self.app.push_screen(NewBookModal(), callback=_on_created)
         elif isinstance(selected, _BookItem):
-            self.dismiss(selected.path)
+            self.dismiss((selected.path, False))
 
     def action_migrate(self) -> None:
         find_list = self.query_one("#find-list", ListView)
@@ -293,7 +293,7 @@ class _ChapterItem(ListItem):
         super().__init__(Label(label or path.name))
 
 
-class ChapterSelectModal(ModalScreen[Path | None]):
+class ChapterSelectModal(ModalScreen[tuple[Path, bool] | None]):
     """Modal for selecting or creating a chapter within a book."""
 
     BINDINGS = [
@@ -342,15 +342,15 @@ class ChapterSelectModal(ModalScreen[Path | None]):
         if not isinstance(item, _ChapterItem):
             return
         if item.path.name == "__new__":
-            def _on_created(chapter_path: Path | None) -> None:
-                if chapter_path:
-                    self.dismiss(chapter_path)
+            def _on_created(result: tuple[Path, bool] | None) -> None:
+                if result:
+                    self.dismiss(result)
             self.app.push_screen(
                 NewChapterModal(self._book_dir),
                 callback=_on_created,
             )
         else:
-            self.dismiss(item.path)
+            self.dismiss((item.path, False))
 
     def action_compile(self) -> None:
         try:
@@ -402,7 +402,7 @@ class NewChapterModal(CreateFileModal):
         else:
             write_text(chapters_file, file_path.name + "\n")
 
-        self.dismiss(file_path)
+        self.dismiss((file_path, True))
 
 
 class _FileItem(ListItem):
@@ -438,7 +438,7 @@ class _FileItem(ListItem):
         self.path = path
 
 
-class FileFindModal(ModalScreen[Path | None]):
+class FileFindModal(ModalScreen[tuple[Path, bool] | None]):
     """Modal for finding files."""
 
     BINDINGS = [
@@ -481,16 +481,16 @@ class FileFindModal(ModalScreen[Path | None]):
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         if isinstance(event.item, _FileItem):
-            self.dismiss(event.item.path)
+            self.dismiss((event.item.path, False))
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
         find_list = self.query_one("#find-list", ListView)
         idx = find_list.index
         items = list(find_list.query(_FileItem))
         if idx is not None and 0 <= idx < len(items):
-            self.dismiss(items[idx].path)
+            self.dismiss((items[idx].path, False))
         elif items:
-            self.dismiss(items[0].path)
+            self.dismiss((items[0].path, False))
         else:
             self.dismiss(None)
 

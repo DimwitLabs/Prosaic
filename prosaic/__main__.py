@@ -157,7 +157,7 @@ class ProsaicApp(App):
         if self.initial_file:
             self._open_editor(self.initial_file)
 
-    def _open_editor(self, file_path: Path | None = None, show_all_panes: bool = False) -> None:
+    def _open_editor(self, file_path: Path | None = None, show_all_panes: bool = False, is_new_file: bool = False) -> None:
         if file_path:
             set_last_file(file_path)
 
@@ -167,6 +167,7 @@ class ProsaicApp(App):
                 initial_file=file_path,
                 light_mode=self.light_mode,
                 show_all_panes=show_all_panes,
+                is_new_file=is_new_file,
             )
         )
 

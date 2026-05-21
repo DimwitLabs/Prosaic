@@ -119,9 +119,10 @@ class DashboardScreen(Screen, inherit_bindings=False):
 
     def _make_open_callback(self, show_all_panes: bool = False):
         """Create a callback that opens the editor with the result."""
-        def callback(result: Path | None) -> None:
+        def callback(result: tuple[Path, bool] | None) -> None:
             if result:
-                self.app._open_editor(result, show_all_panes=show_all_panes)
+                path, is_new = result
+                self.app._open_editor(path, show_all_panes=show_all_panes, is_new_file=is_new)
         return callback
 
     def action_new_piece(self) -> None:
@@ -130,20 +131,22 @@ class DashboardScreen(Screen, inherit_bindings=False):
     def action_new_book(self) -> None:
         self.app.push_screen(BookSelectModal(), callback=self._handle_book_selected)
 
-    def _handle_book_selected(self, result: Path | None) -> None:
+    def _handle_book_selected(self, result: tuple[Path, bool] | None) -> None:
         if result is None:
             return
-        if result.is_dir():
+        path, is_new = result
+        if path.is_dir():
             self.app.push_screen(
-                ChapterSelectModal(result),
+                ChapterSelectModal(path),
                 callback=self._handle_chapter_selected,
             )
         else:
-            self.app._open_editor(result)
+            self.app._open_editor(path, is_new_file=is_new)
 
-    def _handle_chapter_selected(self, result: Path | None) -> None:
+    def _handle_chapter_selected(self, result: tuple[Path, bool] | None) -> None:
         if result:
-            self.app._open_editor(result)
+            path, is_new = result
+            self.app._open_editor(path, is_new_file=is_new)
 
     def action_continue_writing(self) -> None:
         if self.last_file and self.last_file.exists():
@@ -175,14 +178,16 @@ class DashboardScreen(Screen, inherit_bindings=False):
     def action_find_piece(self) -> None:
         self.app.push_screen(FileFindModal(), callback=self._handle_find_result)
 
-    def _handle_find_result(self, result: Path | None) -> None:
+    def _handle_find_result(self, result: tuple[Path, bool] | None) -> None:
         if result:
-            set_last_file(result)
+            path, is_new = result
+            set_last_file(path)
             self.app.push_screen(
                 EditorScreen(
                     self.metrics,
-                    initial_file=result,
+                    initial_file=path,
                     light_mode=self.app.light_mode,
+                    is_new_file=is_new,
                 )
             )
 

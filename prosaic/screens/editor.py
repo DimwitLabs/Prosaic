@@ -51,6 +51,7 @@ class EditorScreen(Screen, inherit_bindings=False):
         add_note: bool = False,
         reader_mode_initial: bool = False,
         show_all_panes: bool = False,
+        is_new_file: bool = False,
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)
@@ -60,6 +61,7 @@ class EditorScreen(Screen, inherit_bindings=False):
         self._add_note = add_note
         self._reader_mode_initial = reader_mode_initial
         self._show_all_panes = show_all_panes
+        self._is_new_file = is_new_file
         self._is_book = False
         self._is_chapter = False
         self._is_manuscript = False
@@ -145,9 +147,18 @@ class EditorScreen(Screen, inherit_bindings=False):
         editor = self.query_one("#editor", TextArea)
         editor.load_text(content)
 
+        # Smart cursor positioning
+        cursor_line = 0
         if self._add_note:
+            # Notes: position at end
             lines = content.split("\n")
-            editor.move_cursor((len(lines) - 1, 0))
+            cursor_line = len(lines) - 1
+        elif self._is_new_file:
+            # New files: position after template
+            cursor_line = self._get_cursor_after_template(path, content)
+        # else: existing files stay at (0, 0)
+        
+        editor.move_cursor((cursor_line, 0))
 
         self.current_file = path
         self.modified = False
@@ -171,6 +182,28 @@ class EditorScreen(Screen, inherit_bindings=False):
             return
         file_tree = self.query_one("#file-tree", FileTree)
         file_tree.expand_path(self.current_file.parent)
+
+    def _get_cursor_after_template(self, path: Path, content: str) -> int:
+        """Return cursor position after template content for new files."""
+        lines = content.split("\n")
+        
+        # Pieces: position after frontmatter (---\ntitle/date/slug\n---\n\n)
+        if path.parent.name == "pieces" and content.startswith("---\n"):
+            for i, line in enumerate(lines):
+                if i > 0 and line == "---":
+                    # Position after closing --- and blank line
+                    return min(i + 2, len(lines) - 1)
+        
+        # Chapters: position after heading (## Title\n\n)
+        elif path.parent.name == "chapters" and content.startswith("##"):
+            return min(2, len(lines) - 1)
+        
+        # Start writing or drafts with heading: position after heading
+        elif content.startswith("#") and len(lines) > 2:
+            return 2
+        
+        # Default: beginning of file
+        return 0
 
     def _save_file(self, silent: bool = False) -> None:
         if self.current_file is None:
