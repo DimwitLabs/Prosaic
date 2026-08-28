@@ -4,8 +4,12 @@
 [![Build](https://img.shields.io/github/actions/workflow/status/DeepanshKhurana/Prosaic/ci.yml?label=build)](https://github.com/DeepanshKhurana/Prosaic/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![Awesome CLI Apps](https://awesome.re/mentioned-badge.svg)](https://github.com/agarrharr/awesome-cli-apps#text-editors)
+[![Dimwit Pledge](https://dimwit.me/pledge.svg)](https://dimwit.me/pledge)
 
 A writer-first terminal writing app built with Python and Textual, built with the assistance of LLM/Copilot tools.
+
+> [!NOTE]
+> This project is backed by the [Dimwit Pledge](https://dimwit.me/pledge).
 
 [Landing page](https://prosaic.dimwit.me)
 
