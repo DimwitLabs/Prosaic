@@ -1,7 +1,9 @@
 """Status bar widget."""
 
+import asyncio
 from pathlib import Path
 
+from textual import work
 from textual.containers import Horizontal
 from textual.reactive import reactive
 from textual.widgets import Static
@@ -114,15 +116,16 @@ class StatusBar(Horizontal):
         except Exception:
             pass
 
-    def watch_words(self, words: int) -> None:
-        try:
-            self.query_one("#word-count", Static).update(f"{words:,} words")
-        except Exception:
-            pass
+    def watch_words(self, old: int, words: int) -> None:
+        self._update_count("#word-count", f"{old:,} words", f"{words:,} words")
 
-    def watch_characters(self, chars: int) -> None:
+    def watch_characters(self, old: int, chars: int) -> None:
+        self._update_count("#char-count", f"{old:,} chars", f"{chars:,} chars")
+
+    def _update_count(self, selector: str, old_text: str, text: str) -> None:
+        """Skip the layout pass when the width is unchanged, since it also repaints the editor."""
         try:
-            self.query_one("#char-count", Static).update(f"{chars:,} chars")
+            self.query_one(selector, Static).update(text, layout=len(text) != len(old_text))
         except Exception:
             pass
 
@@ -134,8 +137,10 @@ class StatusBar(Horizontal):
         except Exception:
             pass
 
-    def update_git_for_file(self, file_path: Path | None) -> None:
-        self.git_status = get_git_status(file_path)
+    @work(exclusive=True, group="git")
+    async def refresh_git(self, file_path: Path | None) -> None:
+        """Look up git status off the UI thread, since GitPython spawns processes."""
+        self.git_status = await asyncio.to_thread(get_git_status, file_path)
 
     def flash_autosave(self) -> None:
         """Briefly show autosave indicator."""

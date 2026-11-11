@@ -52,18 +52,25 @@ def strip_markdown(content: str) -> str:
     return content
 
 
+def _count_visible(stripped: str) -> int:
+    return len(stripped.replace(" ", "").replace("\n", "").replace("\t", ""))
+
+
 def count_words(content: str) -> int:
     """Count words in markdown content, excluding syntax."""
-    stripped = strip_markdown(content)
-    return len(stripped.split())
+    return len(strip_markdown(content).split())
 
 
 def count_characters(content: str, include_spaces: bool = False) -> int:
     """Count characters in markdown content, excluding syntax."""
     stripped = strip_markdown(content)
-    if include_spaces:
-        return len(stripped)
-    return len(stripped.replace(" ", "").replace("\n", "").replace("\t", ""))
+    return len(stripped) if include_spaces else _count_visible(stripped)
+
+
+def count_words_and_characters(content: str) -> tuple[int, int]:
+    """Count words and characters with a single markdown strip."""
+    stripped = strip_markdown(content)
+    return len(stripped.split()), _count_visible(stripped)
 
 
 def extract_headings(content: str) -> list[Heading]:

@@ -1,6 +1,7 @@
 """TextArea subclass with live spell-check underlines and markdown highlighting."""
 
 import re
+from functools import cache, lru_cache
 
 from rich.style import Style
 from textual.binding import Binding
@@ -9,6 +10,12 @@ from textual.reactive import reactive
 from phunspell import Phunspell
 from textual.widgets import TextArea
 from textual.widgets.text_area import TextAreaTheme
+
+from prosaic.widgets._workarounds import (
+    clear_styles_cache,
+    release_syntax_tree,
+    release_theme_watcher,
+)
 
 _LIGHT_MARKER = Style(color="#b8a090")
 _DARK_MARKER = Style(color="#6a5a4a")
@@ -79,6 +86,31 @@ _ITALIC_ASTERISK = re.compile(r"(?<!\*)(\*)([^*]+)(\*)(?!\*)")
 _ITALIC_UNDERSCORE = re.compile(r"(?<!_)(_)([^_]+)(_)(?!_)")
 _INLINE_CODE = re.compile(r"(`)([^`]+)(`)")
 
+@cache
+def _load_dictionary(language: str) -> Phunspell:
+    """Load one shared dictionary per language, with word lookups memoised."""
+    spell = Phunspell(language)
+    spell.lookup = lru_cache(maxsize=100_000)(spell.lookup)
+    return spell
+
+
+def _inline_highlights(line: str) -> list[tuple[int, int, str]]:
+    """Return (start, end, style) spans for bold, italic and inline code, delimiters as markers."""
+    highlights: list[tuple[int, int, str]] = []
+    for pattern, style in (
+        (_INLINE_CODE, "inline_code"),
+        (_BOLD_ASTERISK, "bold"),
+        (_BOLD_UNDERSCORE, "bold"),
+        (_ITALIC_ASTERISK, "italic"),
+        (_ITALIC_UNDERSCORE, "italic"),
+    ):
+        marker = "code.marker" if style == "inline_code" else f"{style}.marker"
+        for m in pattern.finditer(line):
+            highlights.append((m.start(1), m.end(1), marker))
+            highlights.append((m.start(2), m.end(2), style))
+            highlights.append((m.start(3), m.end(3), marker))
+    return highlights
+
 
 
 class SpellCheckTextArea(TextArea, inherit_bindings=False):
@@ -124,9 +156,12 @@ class SpellCheckTextArea(TextArea, inherit_bindings=False):
 
     def __init__(self, *args, spell_language: str = "en", **kwargs) -> None:
         self._spell_language = spell_language
-        self._spell = self._init_spell(spell_language)
+        self._spell = None
+        self._spell_loaded = False
         self._misspelled: dict[int, list[tuple[int, int]]] = {}
         self._md_highlights: dict[int, list[tuple[int, int, str]]] = {}
+        self._spell_lines: dict[str, list[tuple[int, int]]] = {}
+        self._md_lines: dict[str, list[tuple[int, int, str]]] = {}
         requested_theme = kwargs.pop("theme", "prosaic_light")
         super().__init__(*args, **kwargs)
         self.register_theme(PROSAIC_LIGHT_TA)
@@ -135,13 +170,33 @@ class SpellCheckTextArea(TextArea, inherit_bindings=False):
 
     def _init_spell(self, language: str):
         try:
-            return Phunspell(language)
+            return _load_dictionary(language)
         except Exception:
             return None
+
+    def _ensure_spell(self):
+        """Load the dictionary on first use, so it costs nothing while spell check is off."""
+        if not self._spell_loaded:
+            self._spell = self._init_spell(self._spell_language)
+            self._spell_loaded = True
+        return self._spell
+
+    def _set_document(self, text: str, language: str | None) -> None:
+        previous = getattr(self, "document", None)
+        super()._set_document(text, language)
+        if previous is not self.document:
+            release_syntax_tree(previous)
+
+    def on_unmount(self) -> None:
+        release_theme_watcher(self)
+        release_syntax_tree(self.document)
+        clear_styles_cache()
 
     def _scan_inline_markdown(self, text: str) -> None:
         """Scan for inline markdown elements (bold, italic, code)."""
         self._md_highlights.clear()
+        cached = self._md_lines
+        lines: dict[str, list[tuple[int, int, str]]] = {}
         in_frontmatter = False
         in_code_block = False
 
@@ -162,40 +217,25 @@ class SpellCheckTextArea(TextArea, inherit_bindings=False):
             if in_code_block:
                 continue
 
-            highlights: list[tuple[int, int, str]] = []
-
-            for m in _INLINE_CODE.finditer(line):
-                highlights.append((m.start(1), m.end(1), "code.marker"))
-                highlights.append((m.start(2), m.end(2), "inline_code"))
-                highlights.append((m.start(3), m.end(3), "code.marker"))
-
-            for m in _BOLD_ASTERISK.finditer(line):
-                highlights.append((m.start(1), m.end(1), "bold.marker"))
-                highlights.append((m.start(2), m.end(2), "bold"))
-                highlights.append((m.start(3), m.end(3), "bold.marker"))
-
-            for m in _BOLD_UNDERSCORE.finditer(line):
-                highlights.append((m.start(1), m.end(1), "bold.marker"))
-                highlights.append((m.start(2), m.end(2), "bold"))
-                highlights.append((m.start(3), m.end(3), "bold.marker"))
-
-            for m in _ITALIC_ASTERISK.finditer(line):
-                highlights.append((m.start(1), m.end(1), "italic.marker"))
-                highlights.append((m.start(2), m.end(2), "italic"))
-                highlights.append((m.start(3), m.end(3), "italic.marker"))
-
-            for m in _ITALIC_UNDERSCORE.finditer(line):
-                highlights.append((m.start(1), m.end(1), "italic.marker"))
-                highlights.append((m.start(2), m.end(2), "italic"))
-                highlights.append((m.start(3), m.end(3), "italic.marker"))
-
+            highlights = cached.get(line)
+            if highlights is None:
+                highlights = _inline_highlights(line)
+            lines[line] = highlights
             if highlights:
                 self._md_highlights[row] = highlights
 
+        self._md_lines = lines
+
     def _scan_spelling(self, text: str) -> None:
+        """Find misspellings, reusing results for lines whose text has not changed."""
         self._misspelled.clear()
         if not self.spell_check_enabled:
             return
+        spell = self._ensure_spell()
+        if spell is None:
+            return
+        cached = self._spell_lines
+        lines: dict[str, list[tuple[int, int]]] = {}
         in_frontmatter = False
         in_code_block = False
 
@@ -219,15 +259,18 @@ class SpellCheckTextArea(TextArea, inherit_bindings=False):
             if not stripped or _SKIP_LINE.match(stripped):
                 continue
 
-            if self._spell is None:
-                continue
-            spans: list[tuple[int, int]] = []
-            for m in _WORD.finditer(line):
-                word = m.group(1)
-                if not self._spell.lookup(word):
-                    spans.append((m.start(), m.end()))
+            spans = cached.get(line)
+            if spans is None:
+                spans = [
+                    (m.start(), m.end())
+                    for m in _WORD.finditer(line)
+                    if not spell.lookup(m.group(1))
+                ]
+            lines[line] = spans
             if spans:
                 self._misspelled[row] = spans
+
+        self._spell_lines = lines
 
     def _build_highlight_map(self) -> None:
         try:
@@ -236,8 +279,9 @@ class SpellCheckTextArea(TextArea, inherit_bindings=False):
         except Exception:
             pass
 
-        self._scan_spelling(self.text)
-        self._scan_inline_markdown(self.text)
+        text = self.text
+        self._scan_spelling(text)
+        self._scan_inline_markdown(text)
         super()._build_highlight_map()
 
         for row, spans in self._misspelled.items():

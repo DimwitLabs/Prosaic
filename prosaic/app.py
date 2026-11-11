@@ -455,6 +455,16 @@ class FileFindModal(ModalScreen[tuple[Path, bool] | None]):
 
     def on_mount(self) -> None:
         self.query_one("#find-input", Input).focus()
+        workspace_dir = get_workspace_dir()
+        self._files = (
+            sorted(
+                workspace_dir.rglob("*.md"),
+                key=lambda p: p.stat().st_mtime,
+                reverse=True,
+            )
+            if workspace_dir.exists()
+            else []
+        )
         self._refresh_list("")
 
     def on_input_changed(self, event: Input.Changed) -> None:
@@ -465,14 +475,7 @@ class FileFindModal(ModalScreen[tuple[Path, bool] | None]):
         find_list = self.query_one("#find-list", ListView)
         find_list.clear()
 
-        if not workspace_dir.exists():
-            return
-
-        files = sorted(
-            workspace_dir.rglob("*.md"),
-            key=lambda p: p.stat().st_mtime,
-            reverse=True,
-        )
+        files = self._files
         if query:
             files = [f for f in files if query.lower() in f.stem.lower()]
 

@@ -3,6 +3,7 @@
 from prosaic.core.markdown import (
     count_characters,
     count_words,
+    count_words_and_characters,
     extract_headings,
     strip_markdown,
 )
@@ -12,6 +13,7 @@ __all__ = [
     "MetricsTracker",
     "count_characters",
     "count_words",
+    "count_words_and_characters",
     "extract_headings",
     "strip_markdown",
 ]

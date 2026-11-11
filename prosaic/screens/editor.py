@@ -13,10 +13,12 @@ from textual.widgets import Static, TextArea
 
 from prosaic.app import HelpScreen
 from prosaic.config import get_books_dir, get_profile_config, get_workspace_dir, get_spell_check_enabled, set_spell_check_enabled
-from prosaic.core import count_characters, count_words
+from prosaic.core import count_words, count_words_and_characters
 from prosaic.core.metrics import MetricsTracker
 from prosaic.utils import read_text, write_text
 from prosaic.widgets import FileTree, OutlinePanel, SpellCheckTextArea, StatusBar
+
+STATS_REFRESH_SECONDS = 0.25
 
 
 class EditorScreen(Screen, inherit_bindings=False):
@@ -41,7 +43,7 @@ class EditorScreen(Screen, inherit_bindings=False):
     focus_mode: reactive[bool] = reactive(False)
     reader_mode: reactive[bool] = reactive(False)
     current_file: reactive[Path | None] = reactive(None)
-    modified: reactive[bool] = reactive(False)
+    modified: reactive[bool] = reactive(False, repaint=False)
 
     def __init__(
         self,
@@ -66,6 +68,7 @@ class EditorScreen(Screen, inherit_bindings=False):
         self._is_chapter = False
         self._is_manuscript = False
         self._book_dir: Path | None = None
+        self._stats_timer = None
 
     def compose(self) -> ComposeResult:
         ta_theme = "prosaic_light" if self._light_mode else "prosaic_dark"
@@ -132,6 +135,7 @@ class EditorScreen(Screen, inherit_bindings=False):
             self.show_outline = False
 
     def _load_file(self, path: Path) -> None:
+        """Load a file into the editor without counting the load as an edit."""
         if not path.exists():
             return
 
@@ -145,7 +149,8 @@ class EditorScreen(Screen, inherit_bindings=False):
             write_text(path, content)
 
         editor = self.query_one("#editor", TextArea)
-        editor.load_text(content)
+        with editor.prevent(TextArea.Changed):
+            editor.load_text(content)
 
         # Smart cursor positioning
         cursor_line = 0
@@ -169,7 +174,7 @@ class EditorScreen(Screen, inherit_bindings=False):
         statusbar = self.query_one("#statusbar", StatusBar)
         statusbar.filename = path.name
         statusbar.modified = False
-        statusbar.update_git_for_file(path)
+        statusbar.refresh_git(path)
 
         self._update_stats(content)
         self.metrics.set_baseline(count_words(content))
@@ -242,13 +247,12 @@ class EditorScreen(Screen, inherit_bindings=False):
 
             statusbar = self.query_one("#statusbar", StatusBar)
             statusbar.flash_autosave()
-            self.call_later(lambda: statusbar.update_git_for_file(file_path))
+            statusbar.refresh_git(file_path)
         except Exception:
             pass
 
     def _update_stats(self, content: str) -> None:
-        words = count_words(content)
-        chars = count_characters(content)
+        words, chars = count_words_and_characters(content)
         try:
             statusbar = self.query_one("#statusbar", StatusBar)
             statusbar.words = words
@@ -260,7 +264,10 @@ class EditorScreen(Screen, inherit_bindings=False):
         self.query_one("#file-tree", FileTree).display = show
 
     def watch_show_outline(self, show: bool) -> None:
-        self.query_one("#outline", OutlinePanel).display = show
+        outline = self.query_one("#outline", OutlinePanel)
+        outline.display = show
+        if show:
+            outline.update_headings(self.query_one("#editor", TextArea).text)
 
     def watch_focus_mode(self, focus: bool) -> None:
         if focus:
@@ -320,8 +327,16 @@ class EditorScreen(Screen, inherit_bindings=False):
 
     def on_text_area_changed(self, event: TextArea.Changed) -> None:
         self.modified = True
-        content = event.text_area.text
-        self.query_one("#outline", OutlinePanel).update_headings(content)
+        if self._stats_timer is None:
+            self._stats_timer = self.set_timer(STATS_REFRESH_SECONDS, self._refresh_stats)
+
+    def _refresh_stats(self) -> None:
+        """Refresh the outline and counts, which re-read the whole document."""
+        self._stats_timer = None
+        content = self.query_one("#editor", TextArea).text
+        outline = self.query_one("#outline", OutlinePanel)
+        if outline.display:
+            outline.update_headings(content)
         self._update_stats(content)
 
     def on_file_tree_file_selected(self, event: FileTree.FileSelected) -> None:

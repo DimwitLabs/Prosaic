@@ -29,6 +29,16 @@ class OutlineItem(ListItem):
     def compose(self):
         yield Label(self.heading.text)
 
+    def set_heading(self, heading: Heading) -> None:
+        """Update in place, so typing never rebuilds the list. Safe before compose."""
+        if heading.level != self.heading.level:
+            self.remove_class(f"outline-item--h{self.heading.level}")
+            self.add_class(f"outline-item--h{heading.level}")
+        labels = self.query(Label)
+        if heading.text != self.heading.text and labels:
+            labels.first().update(heading.text)
+        self.heading = heading
+
 
 class OutlinePanel(Vertical):
     """Outline panel showing document structure."""
@@ -41,17 +51,28 @@ class OutlinePanel(Vertical):
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
         self._headings: list[Heading] = []
+        self._items: list[OutlineItem] = []
 
     def compose(self):
         yield Static("outline", id="outline-title", classes="panel-title")
         yield OutlineListView(id="outline-list")
 
     def update_headings(self, content: str) -> None:
-        self._headings = extract_headings(content)
-        outline_list = self.query_one("#outline-list", OutlineListView)
-        outline_list.clear()
-        for heading in self._headings:
-            outline_list.append(OutlineItem(heading, classes="outline-item"))
+        headings = extract_headings(content)
+        if headings == self._headings:
+            return
+        self._headings = headings
+        for item, heading in zip(self._items, headings):
+            item.set_heading(heading)
+        for item in self._items[len(headings):]:
+            item.remove()
+        new_items = [
+            OutlineItem(heading, classes="outline-item")
+            for heading in headings[len(self._items):]
+        ]
+        self._items = self._items[: len(headings)] + new_items
+        if new_items:
+            self.query_one("#outline-list", OutlineListView).extend(new_items)
 
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         if isinstance(event.item, OutlineItem):
