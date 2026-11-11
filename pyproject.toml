@@ -25,7 +25,7 @@ classifiers = [
     "Topic :: Text Editors",
 ]
 dependencies = [
-    "textual[syntax]>=0.50.0",
+    "textual[syntax]>=6.0.0",
     "click>=8.1.0",
     "platformdirs>=4.0.0",
     "gitpython>=3.1.0",
