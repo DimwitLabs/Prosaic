@@ -248,7 +248,7 @@ class ProsaicApp(App):
 @click.option("--languages", "show_languages", is_flag=True, help="List valid spell check language codes")
 @click.option("--reference", is_flag=True, help="Show reference")
 @click.option("--license", "show_license", is_flag=True, help="Show MIT license")
-@click.argument("file", required=False, type=click.Path())
+@click.argument("file", required=False, type=click.Path(dir_okay=False))
 def main(
     light: bool | None,
     setup: bool,
