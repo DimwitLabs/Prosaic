@@ -293,6 +293,10 @@ def main(
         click.echo(_get_license_text())
         return
 
+    initial_file = Path(file) if file else None
+    if initial_file is not None and initial_file.is_dir():
+        raise click.ClickException(f"'{file}' is a directory, not a file.")
+
     config = load_config()
     is_legacy_upgrade = was_just_migrated()
     profile_name = profile or config.get("active_profile", "default")
@@ -368,7 +372,7 @@ def main(
 
     app = ProsaicApp(
         light_mode=light_mode,
-        initial_file=Path(file) if file else None,
+        initial_file=initial_file,
     )
     app.run()
 
