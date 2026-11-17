@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-11-17
+
+### Changed
+
+- Prosaic now requires Textual 6.0.0 or newer.
+
+### Fixed
+
+- Typing in long documents no longer lags. Spell check and markdown highlighting now recheck only the lines that changed, word counts and the outline refresh after a short pause in typing instead of on every key, and git status loads in the background. Thanks, [@carbongo](https://github.com/carbongo)!
+- Closing a file now frees its memory. Before, every editor you opened stayed in memory until you quit, so long sessions slowly used more and more. Two of the causes are Textual bugs ([#6665](https://github.com/Textualize/textual/issues/6665), [#6666](https://github.com/Textualize/textual/issues/6666)); Prosaic works around them until they're fixed upstream. Thanks, [@carbongo](https://github.com/carbongo)!
+- Spell-check dictionaries are now loaded once and shared, so opening a file is faster.
+- Opening a file no longer marks it as modified.
+- `prosaic <directory>` now shows an error instead of launching the editor.
+
 ## [1.5.2] - 2026-05-21
 
 ### Changed
